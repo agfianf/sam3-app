@@ -1,9 +1,14 @@
 import { useState, useEffect } from 'react'
+import toast, { Toaster } from 'react-hot-toast'
 import Toolbar from './components/Toolbar'
 import Canvas from './components/Canvas'
 import Sidebar from './components/Sidebar'
+import { Modal } from './components/ui/Modal'
+import { ExportModal } from './components/ExportModal'
 import { useStorage } from './hooks/useStorage'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import type { Tool, Annotation, ImageData } from './types/annotations'
+import { Copy, RotateCcw, Download, Upload } from 'lucide-react'
 import './App.css'
 
 function App() {
@@ -11,10 +16,14 @@ function App() {
   const [selectedAnnotation, setSelectedAnnotation] = useState<string | null>(null)
   const [selectedLabelId, setSelectedLabelId] = useState<string | null>(null)
   const [showLabelManager, setShowLabelManager] = useState(false)
+  const [showExportModal, setShowExportModal] = useState(false)
+  const [showResetModal, setShowResetModal] = useState(false)
+  const [resetIncludeImages, setResetIncludeImages] = useState(false)
 
   const {
     images,
     labels,
+    annotations,
     currentImage,
     currentImageId,
     currentAnnotations,
@@ -26,6 +35,7 @@ function App() {
     removeAnnotation,
     addLabel,
     removeLabel,
+    resetAll,
   } = useStorage()
 
   // Set default selected label when labels are loaded
@@ -117,6 +127,71 @@ function App() {
   const currentImageIndex = images.findIndex(img => img.id === currentImageId)
   const currentImageNumber = currentImageIndex >= 0 ? currentImageIndex + 1 : 0
 
+  // Image navigation functions
+  const goToNextImage = () => {
+    const nextIndex = currentImageIndex + 1
+    if (nextIndex < images.length) {
+      setCurrentImageId(images[nextIndex].id)
+    }
+  }
+
+  const goToPreviousImage = () => {
+    const prevIndex = currentImageIndex - 1
+    if (prevIndex >= 0) {
+      setCurrentImageId(images[prevIndex].id)
+    }
+  }
+
+  // Copy filename to clipboard
+  const copyFilenameToClipboard = async () => {
+    if (currentImage) {
+      try {
+        // Check if clipboard API is available
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(currentImage.name)
+          toast.success('Filename copied to clipboard!')
+        } else {
+          // Fallback for browsers without clipboard API
+          const textArea = document.createElement('textarea')
+          textArea.value = currentImage.name
+          textArea.style.position = 'fixed'
+          textArea.style.left = '-999999px'
+          document.body.appendChild(textArea)
+          textArea.select()
+          try {
+            document.execCommand('copy')
+            toast.success('Filename copied to clipboard!')
+          } catch (err) {
+            toast.error('Failed to copy to clipboard')
+          }
+          document.body.removeChild(textArea)
+        }
+      } catch (error) {
+        toast.error('Failed to copy to clipboard')
+        console.error('Clipboard error:', error)
+      }
+    }
+  }
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    onSelectTool: setSelectedTool,
+    onDelete: () => {
+      if (selectedAnnotation) {
+        handleDeleteAnnotation(selectedAnnotation)
+      }
+    },
+    onNewAnnotation: () => {
+      // If on select tool, switch to rectangle; otherwise keep current drawing tool
+      if (selectedTool === 'select') {
+        setSelectedTool('rectangle')
+      }
+      // If already on a drawing tool, it stays active (ready to draw)
+    },
+    onNextImage: goToNextImage,
+    onPreviousImage: goToPreviousImage,
+  })
+
   if (loading) {
     return (
       <div className="h-screen flex items-center justify-center bg-gray-900">
@@ -130,12 +205,27 @@ function App() {
       {/* Header */}
       <header className="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
         <h1 className="text-xl font-semibold text-white">SAM3 Annotation Platform</h1>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           {images.length > 0 && (
             <span className="text-gray-400 text-sm">
               Image {currentImageNumber} of {images.length} • {currentAnnotations.length} annotations
             </span>
           )}
+          <button
+            onClick={() => setShowExportModal(true)}
+            disabled={annotations.length === 0}
+            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded transition-colors flex items-center gap-1.5"
+          >
+            <Download className="w-4 h-4" />
+            Export
+          </button>
+          <button
+            onClick={() => setShowResetModal(true)}
+            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors flex items-center gap-1.5"
+          >
+            <RotateCcw className="w-4 h-4" />
+            Reset
+          </button>
           <button
             onClick={() => setShowLabelManager(true)}
             className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded transition-colors"
@@ -156,17 +246,43 @@ function App() {
           />
 
           {/* Canvas */}
-          <div className="flex-1 bg-gray-950 overflow-hidden">
-            <Canvas
-              image={currentImageUrl}
-              selectedTool={selectedTool}
-              annotations={currentAnnotations}
-              labels={labels}
-              onAddAnnotation={handleAddAnnotation}
-              onUpdateAnnotation={handleUpdateAnnotation}
-              selectedAnnotation={selectedAnnotation}
-              onSelectAnnotation={setSelectedAnnotation}
-            />
+          <div className="flex-1 bg-gray-950 overflow-hidden flex flex-col">
+            {/* Image Viewer Header */}
+            {currentImage && (
+              <div className="bg-gray-800/50 border-b border-gray-700 px-4 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-orange-500 font-semibold">
+                    {currentImageNumber} / {images.length}
+                  </span>
+                  <span className="text-gray-400 text-sm">|</span>
+                  <span className="text-white text-sm font-mono">{currentImage.name}</span>
+                  <button
+                    onClick={copyFilenameToClipboard}
+                    className="p-1 hover:bg-gray-700 rounded transition-colors text-gray-400 hover:text-white"
+                    title="Copy filename to clipboard"
+                  >
+                    <Copy className="w-4 h-4" />
+                  </button>
+                </div>
+                <div className="text-gray-400 text-xs">
+                  {currentImage.width} × {currentImage.height} px
+                </div>
+              </div>
+            )}
+
+            <div className="flex-1 overflow-hidden">
+              <Canvas
+                image={currentImageUrl}
+                selectedTool={selectedTool}
+                annotations={currentAnnotations}
+                labels={labels}
+                selectedLabelId={selectedLabelId}
+                onAddAnnotation={handleAddAnnotation}
+                onUpdateAnnotation={handleUpdateAnnotation}
+                selectedAnnotation={selectedAnnotation}
+                onSelectAnnotation={setSelectedAnnotation}
+              />
+            </div>
           </div>
 
           {/* Sidebar */}
@@ -254,18 +370,33 @@ function App() {
 
       {/* Label Manager Modal */}
       {showLabelManager && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div
+          className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+          onClick={(e) => {
+            // Allow closing by clicking backdrop only if there are labels
+            if (labels.length > 0 && e.target === e.currentTarget) {
+              setShowLabelManager(false)
+            }
+          }}
+        >
           <div className="bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] overflow-hidden flex flex-col">
             <div className="px-6 py-4 border-b border-gray-700 flex items-center justify-between">
-              <h2 className="text-xl font-semibold text-white">Label Management</h2>
-              <button
-                onClick={() => setShowLabelManager(false)}
-                className="text-gray-400 hover:text-white"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
+              <h2 className="text-xl font-semibold text-white">
+                Label Management
+                {labels.length === 0 && (
+                  <span className="ml-2 text-sm text-orange-500">(Create at least one label)</span>
+                )}
+              </h2>
+              {labels.length > 0 && (
+                <button
+                  onClick={() => setShowLabelManager(false)}
+                  className="text-gray-400 hover:text-white"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
             </div>
 
             <div className="p-6 overflow-y-auto flex-1">
@@ -372,6 +503,149 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Blocking Popup: No Images */}
+      {!loading && images.length === 0 && (
+        <Modal
+          isOpen={true}
+          onClose={() => {}}
+          title="No Images Loaded"
+          blocking={true}
+          showCloseButton={false}
+          maxWidth="md"
+        >
+          <div className="text-center space-y-4">
+            <Upload className="w-16 h-16 mx-auto text-gray-400" />
+            <p className="text-gray-300">
+              You need to upload at least one image before using the annotation tool.
+            </p>
+            <label className="inline-block px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded cursor-pointer transition-colors">
+              <input
+                type="file"
+                multiple
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    handleImageUpload(e.target.files)
+                  }
+                }}
+              />
+              Upload Images
+            </label>
+          </div>
+        </Modal>
+      )}
+
+      {/* Blocking Popup: No Labels */}
+      {!loading && images.length > 0 && labels.length === 0 && !showLabelManager && (
+        <Modal
+          isOpen={true}
+          onClose={() => {}}
+          title="No Labels Available"
+          blocking={true}
+          showCloseButton={false}
+          maxWidth="md"
+        >
+          <div className="text-center space-y-4">
+            <div className="text-gray-300">
+              You need to create at least one label before annotating images.
+            </div>
+            <button
+              onClick={() => setShowLabelManager(true)}
+              className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded transition-colors"
+            >
+              Create Labels
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Reset Confirmation Modal */}
+      <Modal
+        isOpen={showResetModal}
+        onClose={() => {
+          setShowResetModal(false)
+          setResetIncludeImages(false)
+        }}
+        title="Reset Confirmation"
+        maxWidth="md"
+      >
+        <div className="space-y-4">
+          <div className="bg-red-900/20 border border-red-700 rounded-lg p-4">
+            <p className="text-red-400 font-medium">⚠️ Warning: This action cannot be undone!</p>
+          </div>
+          <p className="text-gray-300">
+            Are you sure you want to reset? This will permanently delete:
+          </p>
+          <ul className="list-disc list-inside text-gray-400 space-y-1">
+            <li>All annotations</li>
+            <li>All labels (will reset to defaults)</li>
+            <li>Tool configuration</li>
+            {resetIncludeImages && <li className="text-red-400 font-medium">All loaded images</li>}
+          </ul>
+          <label className="flex items-center gap-2 text-gray-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={resetIncludeImages}
+              onChange={(e) => setResetIncludeImages(e.target.checked)}
+              className="w-4 h-4 text-orange-600 focus:ring-orange-500 focus:ring-offset-gray-800"
+            />
+            Also clear loaded images
+          </label>
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-700">
+            <button
+              onClick={() => {
+                setShowResetModal(false)
+                setResetIncludeImages(false)
+              }}
+              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                await resetAll(resetIncludeImages)
+                setShowResetModal(false)
+                setResetIncludeImages(false)
+                setSelectedAnnotation(null)
+                setSelectedTool('select')
+              }}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+            >
+              Reset All
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Export Modal */}
+      <ExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        images={images}
+        annotations={annotations}
+        labels={labels}
+      />
+
+      {/* Toast Notifications */}
+      <Toaster
+        position="top-right"
+        toastOptions={{
+          duration: 3000,
+          style: {
+            background: '#1f2937',
+            color: '#f2f2f2',
+            border: '1px solid #374151',
+          },
+          success: {
+            iconTheme: {
+              primary: '#f97316',
+              secondary: '#fff',
+            },
+          },
+        }}
+      />
     </div>
   )
 }

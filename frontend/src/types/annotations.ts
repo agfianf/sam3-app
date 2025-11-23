@@ -72,6 +72,15 @@ export interface EditMode {
 }
 
 // COCO Export types
+export interface COCOInfo {
+  year: number
+  version: string
+  description: string
+  contributor: string
+  url?: string
+  date_created: string
+}
+
 export interface COCOImage {
   id: number
   file_name: string
@@ -97,6 +106,7 @@ export interface COCOAnnotation {
 }
 
 export interface COCODataset {
+  info: COCOInfo
   images: COCOImage[]
   annotations: COCOAnnotation[]
   categories: COCOCategory[]

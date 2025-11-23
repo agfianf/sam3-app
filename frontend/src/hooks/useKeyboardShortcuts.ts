@@ -6,6 +6,8 @@ interface KeyboardShortcutsConfig {
   onDelete?: () => void
   onEscape?: () => void
   onNewAnnotation?: () => void
+  onNextImage?: () => void
+  onPreviousImage?: () => void
   selectedTool?: Tool
 }
 
@@ -51,6 +53,15 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
       else if (event.key === 'n' && config.onNewAnnotation) {
         event.preventDefault()
         config.onNewAnnotation()
+      }
+
+      // Image navigation shortcuts
+      else if (event.key === 'f' && config.onNextImage) {
+        event.preventDefault()
+        config.onNextImage()
+      } else if (event.key === 'd' && config.onPreviousImage) {
+        event.preventDefault()
+        config.onPreviousImage()
       }
     }
 

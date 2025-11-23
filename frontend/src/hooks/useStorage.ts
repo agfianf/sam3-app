@@ -98,6 +98,25 @@ export function useStorage() {
     // Optionally: remove annotations with this label or reassign them
   }, [])
 
+  // Reset all data
+  const resetAll = useCallback(async (clearImages: boolean = false) => {
+    try {
+      // Always clear annotations and labels
+      await annotationStorage.clear()
+      await labelStorage.clear()
+
+      // Optionally clear images
+      if (clearImages) {
+        await imageStorage.clear()
+      }
+
+      // Reload data (this will also reinitialize default labels)
+      await loadData()
+    } catch (error) {
+      console.error('Failed to reset data:', error)
+    }
+  }, [loadData])
+
   // Get current image
   const currentImage = images.find(img => img.id === currentImageId)
 
@@ -125,5 +144,6 @@ export function useStorage() {
     updateLabel,
     removeLabel,
     reload: loadData,
+    resetAll,
   }
 }

@@ -1,3 +1,4 @@
+import JSZip from 'jszip'
 import type {
   Annotation,
   RectangleAnnotation,
@@ -5,6 +6,7 @@ import type {
   ImageData,
   Label,
   COCODataset,
+  COCOInfo,
   COCOImage,
   COCOAnnotation,
   COCOCategory,
@@ -15,6 +17,15 @@ export function exportToCOCO(
   annotations: Annotation[],
   labels: Label[]
 ): COCODataset {
+  // Create info object with default values
+  const info: COCOInfo = {
+    year: new Date().getFullYear(),
+    version: '1.0',
+    description: 'SAM3 Annotation Export',
+    contributor: 'SAM3 Annotation Platform',
+    date_created: new Date().toISOString(),
+  }
+
   // Convert images
   const cocoImages: COCOImage[] = images.map((img, index) => ({
     id: index + 1,
@@ -91,23 +102,30 @@ export function exportToCOCO(
   })
 
   return {
+    info,
     images: cocoImages,
     annotations: cocoAnnotations,
     categories: cocoCategories,
   }
 }
 
-export function downloadCOCO(dataset: COCODataset, filename: string = 'annotations.json') {
-  const json = JSON.stringify(dataset, null, 2)
-  const blob = new Blob([json], { type: 'application/json' })
-  const url = URL.createObjectURL(blob)
+export async function downloadCOCO(dataset: COCODataset, filename: string = 'annotations.json') {
+  const zip = new JSZip()
 
+  // Add the COCO JSON file to the zip
+  const json = JSON.stringify(dataset, null, 2)
+  zip.file(filename, json)
+
+  // Generate the zip file
+  const zipBlob = await zip.generateAsync({ type: 'blob' })
+
+  // Download the zip file
+  const url = URL.createObjectURL(zipBlob)
   const link = document.createElement('a')
   link.href = url
-  link.download = filename
+  link.download = `coco_annotations_${Date.now()}.zip`
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
-
   URL.revokeObjectURL(url)
 }

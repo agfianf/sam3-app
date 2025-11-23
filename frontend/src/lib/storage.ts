@@ -104,6 +104,18 @@ async function remove(storeName: string, id: string): Promise<void> {
   })
 }
 
+async function clear(storeName: string): Promise<void> {
+  const db = await openDB()
+  return new Promise((resolve, reject) => {
+    const transaction = db.transaction(storeName, 'readwrite')
+    const store = transaction.objectStore(storeName)
+    const request = store.clear()
+
+    request.onsuccess = () => resolve()
+    request.onerror = () => reject(request.error)
+  })
+}
+
 // Image operations
 export const imageStorage = {
   getAll: () => getAll<ImageData>(STORES.IMAGES),
@@ -111,6 +123,7 @@ export const imageStorage = {
   add: (image: ImageData) => add(STORES.IMAGES, image),
   update: (image: ImageData) => update(STORES.IMAGES, image),
   remove: (id: string) => remove(STORES.IMAGES, id),
+  clear: () => clear(STORES.IMAGES),
 }
 
 // Annotation operations
@@ -136,6 +149,7 @@ export const annotationStorage = {
     const annotations = await annotationStorage.getByImageId(imageId)
     await Promise.all(annotations.map(a => annotationStorage.remove(a.id)))
   },
+  clear: () => clear(STORES.ANNOTATIONS),
 }
 
 // Label operations
@@ -145,19 +159,10 @@ export const labelStorage = {
   add: (label: Label) => add(STORES.LABELS, label),
   update: (label: Label) => update(STORES.LABELS, label),
   remove: (id: string) => remove(STORES.LABELS, id),
+  clear: () => clear(STORES.LABELS),
 
-  // Initialize default labels if none exist
+  // Initialize default labels if none exist (disabled - starts empty)
   initializeDefaults: async (): Promise<void> => {
-    const labels = await labelStorage.getAll()
-    if (labels.length === 0) {
-      const defaultLabels: Label[] = [
-        { id: '1', name: 'Object', color: '#f97316', createdAt: Date.now() },
-        { id: '2', name: 'Person', color: '#3b82f6', createdAt: Date.now() },
-        { id: '3', name: 'Vehicle', color: '#10b981', createdAt: Date.now() },
-        { id: '4', name: 'Animal', color: '#8b5cf6', createdAt: Date.now() },
-        { id: '5', name: 'Background', color: '#6b7280', createdAt: Date.now() },
-      ]
-      await Promise.all(defaultLabels.map(label => labelStorage.add(label)))
-    }
+    // No default labels - user must create them
   },
 }

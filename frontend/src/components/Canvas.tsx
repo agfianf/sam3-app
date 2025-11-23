@@ -8,6 +8,7 @@ interface CanvasProps {
   selectedTool: Tool
   annotations: Annotation[]
   labels: Label[]
+  selectedLabelId: string | null
   onAddAnnotation: (annotation: Omit<Annotation, 'imageId' | 'labelId' | 'createdAt' | 'updatedAt'>) => void
   onUpdateAnnotation: (annotation: Annotation) => void
   selectedAnnotation: string | null
@@ -19,6 +20,7 @@ export default function Canvas({
   selectedTool,
   annotations,
   labels,
+  selectedLabelId,
   onAddAnnotation,
   onUpdateAnnotation,
   selectedAnnotation,
@@ -30,14 +32,20 @@ export default function Canvas({
   const [konvaImage, setKonvaImage] = useState<HTMLImageElement | null>(null)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
   const [scale, setScale] = useState(1)
-  const [isDrawing, setIsDrawing] = useState(false)
   const [currentRectangle, setCurrentRectangle] = useState<number[] | null>(null)
+  const [rectangleStartPoint, setRectangleStartPoint] = useState<{ x: number; y: number } | null>(null)
   const [polygonPoints, setPolygonPoints] = useState<Array<{ x: number; y: number }>>([])
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null)
   const [cursorScreenPosition, setCursorScreenPosition] = useState<{ x: number; y: number } | null>(null)
   const [isNearFirstPoint, setIsNearFirstPoint] = useState(false)
+  const [isShiftPressed, setIsShiftPressed] = useState(false)
 
   const SNAP_DISTANCE = 10 // pixels in original image coordinates
+
+  // Get selected label color (default to orange if no label selected)
+  const selectedLabelColor = selectedLabelId
+    ? labels.find(l => l.id === selectedLabelId)?.color || '#f97316'
+    : '#f97316'
 
   // Load image
   useEffect(() => {
@@ -126,8 +134,37 @@ export default function Canvas({
     const originalY = pos.y / scale
 
     if (selectedTool === 'rectangle') {
-      setIsDrawing(true)
-      setCurrentRectangle([originalX, originalY, 0, 0])
+      if (!rectangleStartPoint) {
+        // First click: Set the start point
+        setRectangleStartPoint({ x: originalX, y: originalY })
+        setCurrentRectangle([originalX, originalY, 0, 0])
+      } else {
+        // Second click: Create the rectangle
+        const width = originalX - rectangleStartPoint.x
+        const height = originalY - rectangleStartPoint.y
+
+        if (Math.abs(width) > 5 && Math.abs(height) > 5) {
+          // Normalize rectangle (handle negative width/height)
+          const normalizedX = width < 0 ? rectangleStartPoint.x + width : rectangleStartPoint.x
+          const normalizedY = height < 0 ? rectangleStartPoint.y + height : rectangleStartPoint.y
+          const normalizedWidth = Math.abs(width)
+          const normalizedHeight = Math.abs(height)
+
+          const newAnnotation: Omit<RectangleAnnotation, 'imageId' | 'labelId' | 'createdAt' | 'updatedAt'> = {
+            id: Date.now().toString(),
+            type: 'rectangle',
+            x: normalizedX,
+            y: normalizedY,
+            width: normalizedWidth,
+            height: normalizedHeight,
+          }
+          onAddAnnotation(newAnnotation)
+        }
+
+        // Reset rectangle state
+        setRectangleStartPoint(null)
+        setCurrentRectangle(null)
+      }
     } else if (selectedTool === 'polygon') {
       // Check if clicking near the first point to close polygon
       if (polygonPoints.length >= 3 && isNearFirstPoint) {
@@ -186,40 +223,17 @@ export default function Canvas({
       setIsNearFirstPoint(false)
     }
 
-    if (!isDrawing || selectedTool !== 'rectangle') return
-
-    if (currentRectangle) {
-      const [x, y] = currentRectangle
-      setCurrentRectangle([x, y, originalX - x, originalY - y])
+    // Update rectangle preview when start point is set
+    if (selectedTool === 'rectangle' && rectangleStartPoint) {
+      const width = originalX - rectangleStartPoint.x
+      const height = originalY - rectangleStartPoint.y
+      setCurrentRectangle([rectangleStartPoint.x, rectangleStartPoint.y, width, height])
     }
   }
 
   const handleMouseUp = () => {
-    if (!isDrawing || selectedTool !== 'rectangle') return
-
-    if (currentRectangle) {
-      const [x, y, width, height] = currentRectangle
-      if (Math.abs(width) > 5 && Math.abs(height) > 5) {
-        // Normalize rectangle (handle negative width/height)
-        const normalizedX = width < 0 ? x + width : x
-        const normalizedY = height < 0 ? y + height : y
-        const normalizedWidth = Math.abs(width)
-        const normalizedHeight = Math.abs(height)
-
-        const newAnnotation: Omit<RectangleAnnotation, 'imageId' | 'labelId' | 'createdAt' | 'updatedAt'> = {
-          id: Date.now().toString(),
-          type: 'rectangle',
-          x: normalizedX,
-          y: normalizedY,
-          width: normalizedWidth,
-          height: normalizedHeight,
-        }
-        onAddAnnotation(newAnnotation)
-      }
-    }
-
-    setIsDrawing(false)
-    setCurrentRectangle(null)
+    // Rectangle creation now happens on second click in handleMouseDown
+    // This function is kept for compatibility but no longer handles rectangle drag
   }
 
   const handleDoubleClick = () => {
@@ -236,23 +250,40 @@ export default function Canvas({
     }
   }
 
-  // Handle Escape key to cancel polygon
+  // Handle keyboard events (Escape to cancel, Shift for proportional scaling)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && selectedTool === 'polygon') {
-        setPolygonPoints([])
-        setIsNearFirstPoint(false)
+      if (e.key === 'Escape') {
+        if (selectedTool === 'polygon') {
+          setPolygonPoints([])
+          setIsNearFirstPoint(false)
+        } else if (selectedTool === 'rectangle') {
+          setRectangleStartPoint(null)
+          setCurrentRectangle(null)
+        }
+      } else if (e.key === 'Shift') {
+        setIsShiftPressed(true)
+      }
+    }
+
+    const handleKeyUp = (e: KeyboardEvent) => {
+      if (e.key === 'Shift') {
+        setIsShiftPressed(false)
       }
     }
 
     window.addEventListener('keydown', handleKeyDown)
-    return () => window.removeEventListener('keydown', handleKeyDown)
+    window.addEventListener('keyup', handleKeyUp)
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown)
+      window.removeEventListener('keyup', handleKeyUp)
+    }
   }, [selectedTool])
 
   // Reset drawing states when image changes
   useEffect(() => {
-    setIsDrawing(false)
     setCurrentRectangle(null)
+    setRectangleStartPoint(null)
     setPolygonPoints([])
     setIsNearFirstPoint(false)
     setMousePosition(null)
@@ -321,6 +352,39 @@ export default function Canvas({
       }
       onUpdateAnnotation(updatedAnnotation)
     }
+  }
+
+  const handlePolygonPointDragEnd = (annotation: PolygonAnnotation, pointIndex: number, e: any) => {
+    const node = e.target
+    const newX = node.x() / scale
+    const newY = node.y() / scale
+
+    const updatedPoints = [...annotation.points]
+    updatedPoints[pointIndex] = { x: newX, y: newY }
+
+    const updatedAnnotation: PolygonAnnotation = {
+      ...annotation,
+      points: updatedPoints,
+      updatedAt: Date.now(),
+    }
+
+    onUpdateAnnotation(updatedAnnotation)
+  }
+
+  const handlePolygonPointDelete = (annotation: PolygonAnnotation, pointIndex: number) => {
+    // Don't allow deletion if only 3 points remain (minimum for a polygon)
+    if (annotation.points.length <= 3) {
+      return
+    }
+
+    const updatedPoints = annotation.points.filter((_, idx) => idx !== pointIndex)
+    const updatedAnnotation: PolygonAnnotation = {
+      ...annotation,
+      points: updatedPoints,
+      updatedAt: Date.now(),
+    }
+
+    onUpdateAnnotation(updatedAnnotation)
   }
 
   if (!image) {
@@ -452,15 +516,33 @@ export default function Canvas({
                       listening={false}
                     />
                   )}
-                  {/* Show polygon points as small circles */}
+                  {/* Show polygon points as small circles - interactive when selected */}
                   {isSelected && poly.points.map((point, idx) => (
                     <Circle
                       key={`poly-point-${annotation.id}-${idx}`}
                       x={point.x * scale}
                       y={point.y * scale}
-                      radius={4}
+                      radius={6}
                       fill={color}
-                      listening={false}
+                      stroke="white"
+                      strokeWidth={2}
+                      draggable={true}
+                      onDragEnd={(e) => {
+                        e.cancelBubble = true // Prevent group drag
+                        handlePolygonPointDragEnd(poly, idx, e)
+                      }}
+                      onDblClick={(e) => {
+                        e.cancelBubble = true // Prevent double-click propagation
+                        handlePolygonPointDelete(poly, idx)
+                      }}
+                      onMouseEnter={(e) => {
+                        const container = e.target.getStage()?.container()
+                        if (container) container.style.cursor = 'pointer'
+                      }}
+                      onMouseLeave={(e) => {
+                        const container = e.target.getStage()?.container()
+                        if (container) container.style.cursor = getCursorStyle()
+                      }}
                     />
                   ))}
                 </Group>
@@ -469,19 +551,30 @@ export default function Canvas({
             return null
           })}
 
-          {/* Current drawing shape */}
-          {isDrawing && selectedTool === 'rectangle' && currentRectangle && (
-            <Rect
-              key="current-rect"
-              x={currentRectangle[0] * scale}
-              y={currentRectangle[1] * scale}
-              width={currentRectangle[2] * scale}
-              height={currentRectangle[3] * scale}
-              stroke="#f97316"
-              strokeWidth={2}
-              dash={[5, 5]}
-              listening={false}
-            />
+          {/* Rectangle preview (point-to-point mode) */}
+          {selectedTool === 'rectangle' && rectangleStartPoint && currentRectangle && (
+            <React.Fragment key="rectangle-preview">
+              <Rect
+                key="current-rect"
+                x={currentRectangle[0] * scale}
+                y={currentRectangle[1] * scale}
+                width={currentRectangle[2] * scale}
+                height={currentRectangle[3] * scale}
+                stroke={selectedLabelColor}
+                strokeWidth={2}
+                dash={[5, 5]}
+                listening={false}
+              />
+              {/* Start point marker */}
+              <Circle
+                key="rect-start-marker"
+                x={rectangleStartPoint.x * scale}
+                y={rectangleStartPoint.y * scale}
+                radius={6}
+                fill={selectedLabelColor}
+                listening={false}
+              />
+            </React.Fragment>
           )}
 
           {/* Polygon in progress */}
@@ -491,7 +584,7 @@ export default function Canvas({
               <Line
                 key="poly-lines"
                 points={polygonPoints.flatMap(p => [p.x * scale, p.y * scale])}
-                stroke="#f97316"
+                stroke={selectedLabelColor}
                 strokeWidth={2}
                 dash={[5, 5]}
                 listening={false}
@@ -506,7 +599,7 @@ export default function Canvas({
                     isNearFirstPoint ? polygonPoints[0].x * scale : mousePosition.x * scale,
                     isNearFirstPoint ? polygonPoints[0].y * scale : mousePosition.y * scale,
                   ]}
-                  stroke="#f97316"
+                  stroke={selectedLabelColor}
                   strokeWidth={1}
                   dash={[3, 3]}
                   opacity={0.6}
@@ -520,7 +613,7 @@ export default function Canvas({
                   x={point.x * scale}
                   y={point.y * scale}
                   radius={idx === 0 && isNearFirstPoint ? 8 : 5}
-                  fill={idx === 0 && isNearFirstPoint ? '#10b981' : '#f97316'}
+                  fill={idx === 0 && isNearFirstPoint ? '#10b981' : selectedLabelColor}
                   stroke={idx === 0 && isNearFirstPoint ? '#10b981' : undefined}
                   strokeWidth={idx === 0 && isNearFirstPoint ? 2 : 0}
                   listening={false}
@@ -533,7 +626,7 @@ export default function Canvas({
                   x={mousePosition.x * scale}
                   y={mousePosition.y * scale}
                   radius={4}
-                  fill="#f97316"
+                  fill={selectedLabelColor}
                   opacity={0.5}
                   listening={false}
                 />
@@ -548,7 +641,7 @@ export default function Canvas({
               <Line
                 key="crosshair-vertical"
                 points={[mousePosition.x * scale, 0, mousePosition.x * scale, dimensions.height]}
-                stroke="#00ffff"
+                stroke={selectedLabelColor}
                 strokeWidth={1.5}
                 dash={[8, 4]}
                 opacity={0.8}
@@ -558,7 +651,7 @@ export default function Canvas({
               <Line
                 key="crosshair-horizontal"
                 points={[0, mousePosition.y * scale, dimensions.width, mousePosition.y * scale]}
-                stroke="#00ffff"
+                stroke={selectedLabelColor}
                 strokeWidth={1.5}
                 dash={[8, 4]}
                 opacity={0.8}
@@ -568,7 +661,23 @@ export default function Canvas({
           )}
 
           {/* Transformer for selected annotation */}
-          {selectedTool === 'select' && <Transformer key="transformer" ref={transformerRef} />}
+          {selectedTool === 'select' && (
+            <Transformer
+              key="transformer"
+              ref={transformerRef}
+              keepRatio={isShiftPressed}
+              enabledAnchors={[
+                'top-left',
+                'top-right',
+                'bottom-left',
+                'bottom-right',
+                'middle-left',
+                'middle-right',
+                'top-center',
+                'bottom-center',
+              ]}
+            />
+          )}
         </Layer>
       </Stage>
 
