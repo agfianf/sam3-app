@@ -145,6 +145,9 @@ export const annotationStorage = {
   add: (annotation: Annotation) => add(STORES.ANNOTATIONS, annotation),
   update: (annotation: Annotation) => update(STORES.ANNOTATIONS, annotation),
   remove: (id: string) => remove(STORES.ANNOTATIONS, id),
+  removeMany: async (ids: string[]): Promise<void> => {
+    await Promise.all(ids.map(id => annotationStorage.remove(id)))
+  },
   removeByImageId: async (imageId: string): Promise<void> => {
     const annotations = await annotationStorage.getByImageId(imageId)
     await Promise.all(annotations.map(a => annotationStorage.remove(a.id)))

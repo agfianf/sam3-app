@@ -11,6 +11,7 @@ export const sam3Client = {
     image: File
     text_prompt: string
     threshold?: number
+    mask_threshold?: number
     return_visualization?: boolean
   }): Promise<SAM3Response> {
     const formData = new FormData()
@@ -18,6 +19,9 @@ export const sam3Client = {
     formData.append('text_prompt', params.text_prompt)
     if (params.threshold !== undefined) {
       formData.append('threshold', params.threshold.toString())
+    }
+    if (params.mask_threshold !== undefined) {
+      formData.append('mask_threshold', params.mask_threshold.toString())
     }
     if (params.return_visualization !== undefined) {
       formData.append('return_visualization', params.return_visualization.toString())
@@ -43,6 +47,7 @@ export const sam3Client = {
     image: File
     bounding_boxes: Array<[number, number, number, number, number]>
     threshold?: number
+    mask_threshold?: number
     return_visualization?: boolean
   }): Promise<SAM3Response> {
     const formData = new FormData()
@@ -50,6 +55,9 @@ export const sam3Client = {
     formData.append('bounding_boxes', JSON.stringify(params.bounding_boxes))
     if (params.threshold !== undefined) {
       formData.append('threshold', params.threshold.toString())
+    }
+    if (params.mask_threshold !== undefined) {
+      formData.append('mask_threshold', params.mask_threshold.toString())
     }
     if (params.return_visualization !== undefined) {
       formData.append('return_visualization', params.return_visualization.toString())

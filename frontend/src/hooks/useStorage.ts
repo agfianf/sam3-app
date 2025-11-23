@@ -81,6 +81,11 @@ export function useStorage() {
     setAnnotations(prev => prev.filter(ann => ann.id !== id))
   }, [])
 
+  const removeManyAnnotations = useCallback(async (ids: string[]) => {
+    await annotationStorage.removeMany(ids)
+    setAnnotations(prev => prev.filter(ann => !ids.includes(ann.id)))
+  }, [])
+
   // Label operations
   const addLabel = useCallback(async (label: Label) => {
     await labelStorage.add(label)
@@ -140,6 +145,7 @@ export function useStorage() {
     addAnnotation,
     updateAnnotation,
     removeAnnotation,
+    removeManyAnnotations,
     addLabel,
     updateLabel,
     removeLabel,
