@@ -15,12 +15,17 @@ Simple and lightweight REST API for **Segment Anything Model 3 (SAM3)** using Hu
 ## Architecture
 
 ```
-SAM3 FastAPI App (Simplified)
-├── integrations/sam3/inference.py  # Direct SAM3 model inference
-├── integrations/sam3/visualizer.py # Draw masks and boxes
+SAM3 FastAPI App
+├── main.py                         # FastAPI app with model loading
+├── config.py                       # Settings and environment config
+├── integrations/sam3/
+│   ├── inference.py                # SAM3 model inference
+│   └── visualizer.py               # Draw masks and boxes
 ├── routers/sam3.py                 # API endpoints
 ├── schemas/sam3.py                 # Request/response models
-└── main.py                         # FastAPI app with model loading
+└── helpers/
+    ├── response_api.py             # JSON response formatting
+    └── logger.py                   # Logging setup
 ```
 
 ## Prerequisites
@@ -213,12 +218,17 @@ Edit `.env` file:
 ```bash
 # Application
 DEBUG=true
+APP_HOST=0.0.0.0
 APP_PORT=8000
 LOG_LEVEL=INFO
+
+# HuggingFace (REQUIRED)
+HF_TOKEN=hf_your_token_here
 
 # SAM3 Model
 SAM3_MODEL_NAME=facebook/sam3
 SAM3_DEVICE=auto  # auto, cpu, cuda
+SAM3_DEFAULT_THRESHOLD=0.5
 
 # API Limits
 MAX_IMAGE_SIZE_MB=10
@@ -228,6 +238,9 @@ MAX_IMAGE_DIMENSION=4096
 # Visualization
 VISUALIZATION_FORMAT=PNG  # PNG or JPEG
 VISUALIZATION_QUALITY=95
+
+# CORS
+ALLOWED_ORIGINS=*  # Comma-separated origins
 ```
 
 ## GPU Support
@@ -256,11 +269,11 @@ make docker-up
 ## Development Commands
 
 ```bash
+# Local Development
 make install          # Install dependencies
 make run              # Run locally
-make test             # Run tests
-make format           # Format code
-make lint             # Lint code
+make format           # Format code (ruff)
+make lint             # Lint code (ruff)
 
 # Docker
 make docker-up        # Start services
@@ -276,31 +289,30 @@ make docker-shell     # Shell into container
 sam3-app/
 ├── src/app/
 │   ├── main.py                      # FastAPI app + model loading
-│   ├── config.py                    # Simple settings
+│   ├── config.py                    # Settings and environment config
 │   ├── integrations/sam3/
-│   │   ├── inference.py             # SAM3 inference (follows docs)
-│   │   └── visualizer.py            # Draw masks/boxes
+│   │   ├── inference.py             # SAM3 model inference
+│   │   └── visualizer.py            # Mask and box visualization
 │   ├── routers/sam3.py              # API endpoints
-│   ├── schemas/sam3.py              # Pydantic models
+│   ├── schemas/sam3.py              # Pydantic request/response models
 │   └── helpers/
-│       ├── response_api.py          # Standard JSON responses
-│       └── logger.py                # Logging
-├── docker-compose.yml               # Single app service
-├── Dockerfile                       # Python 3.12 + uv
-├── pyproject.toml                   # Dependencies (no DB/Redis)
-├── Makefile                         # Commands
+│       ├── response_api.py          # JSON response formatting
+│       └── logger.py                # Logging setup
+├── docker-compose.yml               # Docker service definition
+├── Dockerfile                       # Python 3.12-slim + uv
+├── pyproject.toml                   # Dependencies
+├── Makefile                         # Development commands
 └── README.md
 ```
 
 ## Performance
 
-Typical inference times (NVIDIA RTX 3090):
+Performance depends on hardware:
 
-- **Text prompt**: ~200-300ms
-- **Bbox prompt**: ~150-250ms
-- **Batch (10 images)**: ~2-3s (~250ms/image)
+- **GPU (CUDA)**: Fast inference (~200-500ms per image)
+- **CPU**: 5-10x slower than GPU
 
-CPU inference is 5-10x slower.
+Batch processing is more efficient for multiple images.
 
 ## API Documentation
 
@@ -314,7 +326,9 @@ CPU inference is 5-10x slower.
 
 Pre-download the model:
 ```bash
-docker-compose exec app python -c "from transformers import Sam3Model; Sam3Model.from_pretrained('facebook/sam3')"
+make docker-shell
+# Inside container:
+python -c "from transformers import Sam3Model; Sam3Model.from_pretrained('facebook/sam3')"
 ```
 
 ### Out of Memory
@@ -325,18 +339,16 @@ MAX_BATCH_SIZE=5
 MAX_IMAGE_DIMENSION=2048
 ```
 
-## What's Different (Simplified)
+## Design Philosophy
 
-Compared to typical FastAPI apps, this is simplified:
+This application prioritizes simplicity:
 
-- ❌ No database (PostgreSQL removed)
-- ❌ No Redis caching
-- ❌ No complex service/repository layers
-- ❌ No job IDs or async result storage
-- ✅ Direct inference with immediate results
-- ✅ Base64-encoded visualizations in response
-- ✅ Follows HuggingFace transformers documentation exactly
-- ✅ ~70% less code
+- **No database** - Stateless API, no persistence needed
+- **No caching** - Direct inference on every request
+- **No background jobs** - Synchronous processing with immediate results
+- **Minimal layers** - Router → Integration → Model (no service/repository pattern)
+- **Standard responses** - JSON with consistent structure
+- **Base64 visualizations** - Images returned inline (optional)
 
 ## References
 
