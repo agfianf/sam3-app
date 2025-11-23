@@ -541,6 +541,32 @@ export default function Canvas({
             </React.Fragment>
           )}
 
+          {/* Crosshair lines for Rect and Polygon modes */}
+          {(selectedTool === 'rectangle' || selectedTool === 'polygon') && mousePosition && (
+            <React.Fragment key="crosshair">
+              {/* Vertical crosshair line */}
+              <Line
+                key="crosshair-vertical"
+                points={[mousePosition.x * scale, 0, mousePosition.x * scale, dimensions.height]}
+                stroke="#00ffff"
+                strokeWidth={1.5}
+                dash={[8, 4]}
+                opacity={0.8}
+                listening={false}
+              />
+              {/* Horizontal crosshair line */}
+              <Line
+                key="crosshair-horizontal"
+                points={[0, mousePosition.y * scale, dimensions.width, mousePosition.y * scale]}
+                stroke="#00ffff"
+                strokeWidth={1.5}
+                dash={[8, 4]}
+                opacity={0.8}
+                listening={false}
+              />
+            </React.Fragment>
+          )}
+
           {/* Transformer for selected annotation */}
           {selectedTool === 'select' && <Transformer key="transformer" ref={transformerRef} />}
         </Layer>
