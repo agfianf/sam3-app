@@ -39,6 +39,7 @@ export default function Canvas({
   const [cursorScreenPosition, setCursorScreenPosition] = useState<{ x: number; y: number } | null>(null)
   const [isNearFirstPoint, setIsNearFirstPoint] = useState(false)
   const [isShiftPressed, setIsShiftPressed] = useState(false)
+  const [isCtrlPressed, setIsCtrlPressed] = useState(false)
 
   const SNAP_DISTANCE = 10 // pixels in original image coordinates
 
@@ -250,7 +251,7 @@ export default function Canvas({
     }
   }
 
-  // Handle keyboard events (Escape to cancel, Shift for proportional scaling)
+  // Handle keyboard events (Escape to cancel, Shift for proportional scaling, Ctrl/Cmd for adding points)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -263,12 +264,16 @@ export default function Canvas({
         }
       } else if (e.key === 'Shift') {
         setIsShiftPressed(true)
+      } else if (e.key === 'Control' || e.key === 'Meta') {
+        setIsCtrlPressed(true)
       }
     }
 
     const handleKeyUp = (e: KeyboardEvent) => {
       if (e.key === 'Shift') {
         setIsShiftPressed(false)
+      } else if (e.key === 'Control' || e.key === 'Meta') {
+        setIsCtrlPressed(false)
       }
     }
 
@@ -387,6 +392,88 @@ export default function Canvas({
     onUpdateAnnotation(updatedAnnotation)
   }
 
+  const handlePolygonLineClick = (annotation: PolygonAnnotation, e: any) => {
+    // Only add point if Ctrl/Cmd is pressed
+    if (!isCtrlPressed) return
+
+    const stage = e.target.getStage()
+    const pos = stage.getPointerPosition()
+
+    // Convert to original image coordinates
+    const clickX = pos.x / scale
+    const clickY = pos.y / scale
+
+    const poly = annotation as PolygonAnnotation
+
+    // Find the nearest edge to insert the new point
+    let minDistance = Infinity
+    let insertIndex = 0
+
+    for (let i = 0; i < poly.points.length; i++) {
+      const p1 = poly.points[i]
+      const p2 = poly.points[(i + 1) % poly.points.length]
+
+      // Calculate distance from click point to line segment
+      const distance = pointToLineSegmentDistance(
+        { x: clickX, y: clickY },
+        p1,
+        p2
+      )
+
+      if (distance < minDistance) {
+        minDistance = distance
+        insertIndex = i + 1
+      }
+    }
+
+    // Insert the new point after the first point of the nearest edge
+    const updatedPoints = [...poly.points]
+    updatedPoints.splice(insertIndex, 0, { x: clickX, y: clickY })
+
+    const updatedAnnotation: PolygonAnnotation = {
+      ...annotation,
+      points: updatedPoints,
+      updatedAt: Date.now(),
+    }
+
+    onUpdateAnnotation(updatedAnnotation)
+  }
+
+  // Helper function to calculate distance from point to line segment
+  const pointToLineSegmentDistance = (
+    point: { x: number; y: number },
+    lineStart: { x: number; y: number },
+    lineEnd: { x: number; y: number }
+  ) => {
+    const A = point.x - lineStart.x
+    const B = point.y - lineStart.y
+    const C = lineEnd.x - lineStart.x
+    const D = lineEnd.y - lineStart.y
+
+    const dot = A * C + B * D
+    const lenSq = C * C + D * D
+    let param = -1
+
+    if (lenSq !== 0) param = dot / lenSq
+
+    let xx, yy
+
+    if (param < 0) {
+      xx = lineStart.x
+      yy = lineStart.y
+    } else if (param > 1) {
+      xx = lineEnd.x
+      yy = lineEnd.y
+    } else {
+      xx = lineStart.x + param * C
+      yy = lineStart.y + param * D
+    }
+
+    const dx = point.x - xx
+    const dy = point.y - yy
+    return Math.sqrt(dx * dx + dy * dy)
+  }
+
   if (!image) {
     return (
       <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -499,7 +586,13 @@ export default function Canvas({
                     strokeWidth={2}
                     fill={`${color}33`}
                     closed
-                    onClick={() => onSelectAnnotation(annotation.id)}
+                    onClick={(e) => {
+                      if (isCtrlPressed && isSelected) {
+                        handlePolygonLineClick(poly, e)
+                      } else {
+                        onSelectAnnotation(annotation.id)
+                      }
+                    }}
                     onTap={() => onSelectAnnotation(annotation.id)}
                     opacity={isSelected ? 1 : 0.7}
                   />
@@ -527,6 +620,10 @@ export default function Canvas({
                       stroke="white"
                       strokeWidth={2}
                       draggable={true}
+                      onDragMove={(e) => {
+                        e.cancelBubble = true // Prevent group drag
+                        handlePolygonPointDragEnd(poly, idx, e)
+                      }}
                       onDragEnd={(e) => {
                         e.cancelBubble = true // Prevent group drag
                         handlePolygonPointDragEnd(poly, idx, e)
