@@ -40,6 +40,12 @@ export default function Canvas({
   const [isNearFirstPoint, setIsNearFirstPoint] = useState(false)
   const [isShiftPressed, setIsShiftPressed] = useState(false)
   const [isCtrlPressed, setIsCtrlPressed] = useState(false)
+  const [draggingPoint, setDraggingPoint] = useState<{
+    annotationId: string
+    pointIndex: number
+    x: number
+    y: number
+  } | null>(null)
 
   const SNAP_DISTANCE = 10 // pixels in original image coordinates
 
@@ -359,6 +365,28 @@ export default function Canvas({
     }
   }
 
+  const handlePolygonPointDragStart = (annotation: PolygonAnnotation, pointIndex: number) => {
+    setDraggingPoint({
+      annotationId: annotation.id,
+      pointIndex,
+      x: annotation.points[pointIndex].x,
+      y: annotation.points[pointIndex].y,
+    })
+  }
+
+  const handlePolygonPointDragMove = (annotation: PolygonAnnotation, pointIndex: number, e: any) => {
+    const node = e.target
+    const newX = node.x() / scale
+    const newY = node.y() / scale
+
+    setDraggingPoint({
+      annotationId: annotation.id,
+      pointIndex,
+      x: newX,
+      y: newY,
+    })
+  }
+
   const handlePolygonPointDragEnd = (annotation: PolygonAnnotation, pointIndex: number, e: any) => {
     const node = e.target
     const newX = node.x() / scale
@@ -374,6 +402,7 @@ export default function Canvas({
     }
 
     onUpdateAnnotation(updatedAnnotation)
+    setDraggingPoint(null)
   }
 
   const handlePolygonPointDelete = (annotation: PolygonAnnotation, pointIndex: number) => {
@@ -564,7 +593,17 @@ export default function Canvas({
               )
             } else if (annotation.type === 'polygon') {
               const poly = annotation as PolygonAnnotation
-              const points = poly.points.flatMap(p => [p.x * scale, p.y * scale])
+
+              // Use dragging point if this polygon is being edited
+              const displayPoints = draggingPoint && draggingPoint.annotationId === annotation.id
+                ? poly.points.map((p, idx) =>
+                    idx === draggingPoint.pointIndex
+                      ? { x: draggingPoint.x, y: draggingPoint.y }
+                      : p
+                  )
+                : poly.points
+
+              const points = displayPoints.flatMap(p => [p.x * scale, p.y * scale])
 
               return (
                 <Group
@@ -597,11 +636,11 @@ export default function Canvas({
                     opacity={isSelected ? 1 : 0.7}
                   />
                   {/* Label text above polygon (use first point) */}
-                  {poly.points.length > 0 && (
+                  {displayPoints.length > 0 && (
                     <Text
                       key={`poly-label-${annotation.id}`}
-                      x={poly.points[0].x * scale}
-                      y={poly.points[0].y * scale - 20}
+                      x={displayPoints[0].x * scale}
+                      y={displayPoints[0].y * scale - 20}
                       text={labelName}
                       fontSize={14}
                       fill="white"
@@ -620,9 +659,13 @@ export default function Canvas({
                       stroke="white"
                       strokeWidth={2}
                       draggable={true}
+                      onDragStart={(e) => {
+                        e.cancelBubble = true // Prevent group drag
+                        handlePolygonPointDragStart(poly, idx)
+                      }}
                       onDragMove={(e) => {
                         e.cancelBubble = true // Prevent group drag
-                        handlePolygonPointDragEnd(poly, idx, e)
+                        handlePolygonPointDragMove(poly, idx, e)
                       }}
                       onDragEnd={(e) => {
                         e.cancelBubble = true // Prevent group drag
@@ -805,8 +848,18 @@ export default function Canvas({
           bottomRight = { x: Math.round(rect.x + rect.width), y: Math.round(rect.y + rect.height) }
         } else if (annotation.type === 'polygon') {
           const poly = annotation as PolygonAnnotation
-          const xs = poly.points.map(p => p.x)
-          const ys = poly.points.map(p => p.y)
+
+          // Use dragging point if this polygon is being edited
+          const bboxPoints = draggingPoint && draggingPoint.annotationId === annotation.id
+            ? poly.points.map((p, idx) =>
+                idx === draggingPoint.pointIndex
+                  ? { x: draggingPoint.x, y: draggingPoint.y }
+                  : p
+              )
+            : poly.points
+
+          const xs = bboxPoints.map(p => p.x)
+          const ys = bboxPoints.map(p => p.y)
           const minX = Math.min(...xs)
           const minY = Math.min(...ys)
           const maxX = Math.max(...xs)
