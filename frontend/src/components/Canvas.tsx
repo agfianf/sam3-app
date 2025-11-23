@@ -99,13 +99,20 @@ export default function Canvas({
     return () => window.removeEventListener('resize', handleResize)
   }, [konvaImage])
 
-  // Update transformer when selection changes
+  // Update transformer when selection changes (only for rectangles)
   useEffect(() => {
     if (transformerRef.current && stageRef.current && selectedTool === 'select') {
       if (selectedAnnotation) {
-        const node = stageRef.current.findOne(`#ann-${selectedAnnotation}`)
-        if (node) {
-          transformerRef.current.nodes([node])
+        const annotation = annotations.find(a => a.id === selectedAnnotation)
+        // Only attach transformer to rectangles, polygons use point-based editing
+        if (annotation && annotation.type === 'rectangle') {
+          const node = stageRef.current.findOne(`#ann-${selectedAnnotation}`)
+          if (node) {
+            transformerRef.current.nodes([node])
+            transformerRef.current.getLayer()?.batchDraw()
+          }
+        } else {
+          transformerRef.current.nodes([])
           transformerRef.current.getLayer()?.batchDraw()
         }
       } else {
@@ -113,7 +120,7 @@ export default function Canvas({
         transformerRef.current.getLayer()?.batchDraw()
       }
     }
-  }, [selectedAnnotation, selectedTool])
+  }, [selectedAnnotation, selectedTool, annotations])
 
   const getLabel = (labelId: string) => {
     return labels.find(l => l.id === labelId)
@@ -124,8 +131,8 @@ export default function Canvas({
   }
 
   const handleMouseDown = (e: any) => {
-    // Deselect when clicking on stage
-    const clickedOnEmpty = e.target === e.target.getStage()
+    // Deselect when clicking on stage or image (empty area)
+    const clickedOnEmpty = e.target === e.target.getStage() || e.target.attrs?.image
     if (clickedOnEmpty && selectedTool === 'select') {
       onSelectAnnotation(null)
       return
@@ -570,6 +577,7 @@ export default function Canvas({
                     height={rect.height * scale}
                     stroke={color}
                     strokeWidth={2}
+                    strokeScaleEnabled={false}
                     fill={`${color}33`}
                     onClick={() => onSelectAnnotation(annotation.id)}
                     onTap={() => onSelectAnnotation(annotation.id)}
@@ -623,6 +631,7 @@ export default function Canvas({
                     points={points}
                     stroke={color}
                     strokeWidth={2}
+                    strokeScaleEnabled={false}
                     fill={`${color}33`}
                     closed
                     onClick={(e) => {
