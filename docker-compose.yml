@@ -1,18 +1,21 @@
 version: '3.8'
 
 services:
-  # SAM3 FastAPI Application
-  app:
+  # Backend - SAM3 FastAPI Application
+  backend:
     build:
-      context: .
+      context: ./backend
       dockerfile: Dockerfile
-    container_name: sam3-app
+    # images: sam3-be
+    container_name: sam3-backend
     command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
     volumes:
-      - ./src:/code/src  # Mount source for hot-reload
+      - ./backend/src:/code/src  # Mount source for hot-reload
       - huggingface_cache:/root/.cache/huggingface  # Cache model downloads
+    env_file:
+      - ./backend/.env
     environment:
       # App settings
       - DEBUG=${DEBUG:-true}
@@ -30,6 +33,8 @@ services:
       # Logging
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
     restart: unless-stopped
+    networks:
+      - sam3-network
     # Uncomment for GPU support (requires nvidia-docker)
     # deploy:
     #   resources:
@@ -39,10 +44,46 @@ services:
     #           count: 1
     #           capabilities: [gpu]
 
+  # Frontend - React Annotation Platform
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: development
+    # images: sam3-fe
+    container_name: sam3-frontend
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+      - VITE_ENV=development
+    depends_on:
+      - backend
+    networks:
+      - sam3-network
+    command: npm run dev -- --host 0.0.0.0
+
+  # Frontend Production (uncomment for production)
+  # frontend-prod:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #   container_name: sam3-frontend-prod
+  #   ports:
+  #     - "3000:80"
+  #   depends_on:
+  #     - backend
+  #   networks:
+  #     - sam3-network
+  #   restart: unless-stopped
+
 volumes:
   huggingface_cache:
     driver: local
 
 networks:
-  default:
-    name: sam3-network
+  sam3-network:
+    driver: bridge
