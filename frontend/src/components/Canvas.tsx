@@ -1,5 +1,5 @@
 import Konva from 'konva'
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useEffect, useRef, useState, useMemo } from 'react'
 import { Circle, Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from 'react-konva'
 import type { Annotation, Label, PolygonAnnotation, RectangleAnnotation, Tool } from '../types/annotations'
 
@@ -400,7 +400,9 @@ export default function Canvas({
   }, [image])
 
   const handleDragEnd = (annotation: Annotation, e: any) => {
+    console.log('[DRAG] handleDragEnd called for:', annotation.type, 'id:', annotation.id)
     const node = e.target
+    console.log('[DRAG] Node position:', { x: node.x(), y: node.y() })
     const scaleX = node.scaleX()
     const scaleY = node.scaleY()
 
@@ -421,15 +423,24 @@ export default function Canvas({
       }
       onUpdateAnnotation(updatedAnnotation)
     } else if (annotation.type === 'polygon') {
+      console.log('[DRAG] Processing polygon drag end')
       const poly = annotation as PolygonAnnotation
       const offsetX = node.x() / scale
       const offsetY = node.y() / scale
+      console.log('[DRAG] Polygon offset:', { offsetX, offsetY, scale })
+      console.log('[DRAG] Original points:', poly.points.slice(0, 2), '...')
+
+      // CRITICAL: Reset node position immediately after reading it
+      // This must happen before React re-renders to prevent position mismatch
+      node.x(0)
+      node.y(0)
 
       // Update all polygon points with the offset
       const updatedPoints = poly.points.map(point => ({
         x: point.x + offsetX,
         y: point.y + offsetY,
       }))
+      console.log('[DRAG] Updated points:', updatedPoints.slice(0, 2), '...')
 
       const updatedAnnotation: PolygonAnnotation = {
         ...poly,
@@ -437,10 +448,7 @@ export default function Canvas({
         updatedAt: Date.now(),
       }
 
-      // Reset position to 0,0 since we've updated the points
-      node.x(0)
-      node.y(0)
-
+      console.log('[DRAG] Calling onUpdateAnnotation for polygon')
       onUpdateAnnotation(updatedAnnotation)
     }
   }
@@ -610,6 +618,12 @@ export default function Canvas({
     return Math.sqrt(dx * dx + dy * dy)
   }
 
+  // Memoize visible annotations to prevent unnecessary re-renders
+  const visibleAnnotations = useMemo(() => {
+    console.log('[RENDER] Filtering annotations')
+    return annotations.filter(isAnnotationVisible)
+  }, [annotations])
+
   if (!image) {
     return (
       <div className="w-full h-full flex items-center justify-center text-gray-400">
@@ -663,7 +677,7 @@ export default function Canvas({
           )}
 
           {/* Existing annotations */}
-          {annotations.filter(isAnnotationVisible).map((annotation) => {
+          {visibleAnnotations.map((annotation) => {
             const label = getLabel(annotation.labelId)
             const color = label?.color || '#f97316'
             const labelName = label?.name || 'Unknown'
@@ -723,13 +737,8 @@ export default function Canvas({
                   key={`poly-group-${annotation.id}`}
                   id={`ann-${annotation.id}`}
                   draggable={selectedTool === 'select'}
-                  onDragMove={() => {
-                    // Force transformer to update during drag
-                    if (selectedTool === 'select' && transformerRef.current) {
-                      transformerRef.current.getLayer()?.batchDraw()
-                    }
-                  }}
-                  onDragEnd={(e) => handleDragEnd(annotation, e)}
+                  onDragStart={() => console.log('[DRAG] Polygon drag started:', annotation.id)}
+                  {...(selectedTool === 'select' && { onDragEnd: (e) => handleDragEnd(annotation, e) })}
                 >
                   <Line
                     key={`poly-${annotation.id}`}

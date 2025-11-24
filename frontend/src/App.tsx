@@ -207,11 +207,17 @@ function App() {
   }
 
   const handleUpdateAnnotation = async (annotation: Annotation) => {
+    console.log('[APP] handleUpdateAnnotation called for:', annotation.type, 'id:', annotation.id)
+    if (annotation.type === 'polygon') {
+      const poly = annotation as PolygonAnnotation
+      console.log('[APP] Polygon first point:', poly.points[0])
+    }
     const updatedAnnotation = {
       ...annotation,
       updatedAt: Date.now(),
     }
     await updateAnnotation(updatedAnnotation)
+    console.log('[APP] updateAnnotation completed')
     // Record history after user action (not during undo/redo)
     if (!isUndoingRef.current) {
       recordChange(currentAnnotations.map(a => a.id === annotation.id ? updatedAnnotation : a))
