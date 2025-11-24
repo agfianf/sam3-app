@@ -7,30 +7,41 @@ interface PromptModeSelectorProps {
 }
 
 export function PromptModeSelector({ value, onChange, disabled = false }: PromptModeSelectorProps) {
-  const modes: Array<{ value: PromptMode; label: string }> = [
-    { value: 'single', label: 'Single Image' },
-    { value: 'auto-apply', label: 'Auto-Apply' },
-    { value: 'batch', label: 'Apply to All' },
+  const modes: Array<{ value: PromptMode; label: string; description: string }> = [
+    { value: 'single', label: 'Single Image', description: 'Apply to current image only' },
+    { value: 'auto-apply', label: 'Auto-Apply', description: 'Auto-run when navigating to new images' },
+    { value: 'batch', label: 'Apply to All', description: 'Process multiple images at once' },
   ]
 
   return (
     <div className="space-y-2">
-      <label htmlFor="prompt-mode-select" className="text-xs font-medium text-gray-300">
-        Apply Mode
-      </label>
-      <select
-        id="prompt-mode-select"
-        value={value}
-        onChange={(e) => onChange(e.target.value as PromptMode)}
-        disabled={disabled}
-        className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded text-sm text-white focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+      <label className="text-xs font-medium text-gray-300">Apply Mode</label>
+      <div className="space-y-1.5">
         {modes.map((mode) => (
-          <option key={mode.value} value={mode.value}>
-            {mode.label}
-          </option>
+          <label
+            key={mode.value}
+            className={`flex items-start gap-2 p-2 rounded cursor-pointer transition-colors ${
+              value === mode.value
+                ? 'bg-orange-600/20 border border-orange-600/50'
+                : 'bg-gray-800 border border-gray-700 hover:bg-gray-700'
+            } ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            <input
+              type="radio"
+              name="prompt-mode"
+              value={mode.value}
+              checked={value === mode.value}
+              onChange={(e) => onChange(e.target.value as PromptMode)}
+              disabled={disabled}
+              className="mt-0.5 text-orange-600 focus:ring-orange-500 focus:ring-offset-gray-900"
+            />
+            <div className="flex-1 min-w-0">
+              <div className="text-sm font-medium text-white">{mode.label}</div>
+              <div className="text-xs text-gray-400">{mode.description}</div>
+            </div>
+          </label>
         ))}
-      </select>
+      </div>
     </div>
   )
 }

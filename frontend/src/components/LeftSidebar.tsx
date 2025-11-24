@@ -24,6 +24,7 @@ interface LeftSidebarProps {
   }) => void
   onBboxPromptModeChange?: (enabled: boolean) => void
   onAIPanelActiveChange?: (active: boolean) => void
+  onTextPromptChange?: (prompt: string) => void
   promptBboxes?: Array<{ x: number; y: number; width: number; height: number; id: string; labelId: string }>
   onPromptBboxesChange?: (bboxes: Array<{ x: number; y: number; width: number; height: number; id: string; labelId: string }>) => void
   currentAnnotations?: any[]
@@ -85,6 +86,7 @@ export function LeftSidebar({
   onAnnotationsCreated,
   onBboxPromptModeChange,
   onAIPanelActiveChange,
+  onTextPromptChange,
   promptBboxes = [],
   onPromptBboxesChange,
   currentAnnotations = [],
@@ -222,6 +224,7 @@ export function LeftSidebar({
               onClose={handlePanelClose}
               currentAnnotations={currentAnnotations}
               onLoadingChange={onAutoApplyLoadingChange}
+              onTextPromptChange={onTextPromptChange}
             />
           )}
           {activeTool === 'bbox-prompt' && (

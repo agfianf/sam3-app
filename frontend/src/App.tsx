@@ -23,6 +23,7 @@ function App() {
   const [promptBboxes, setPromptBboxes] = useState<Array<{ x: number; y: number; width: number; height: number; id: string; labelId: string }>>([])
   const [isBboxPromptMode, setIsBboxPromptMode] = useState(false)
   const [isAIPanelActive, setIsAIPanelActive] = useState(false)
+  const [currentTextPrompt, setCurrentTextPrompt] = useState('')
   const [promptMode, setPromptMode] = useState<PromptMode>(() => {
     const saved = localStorage.getItem('promptMode')
     return (saved as PromptMode) || 'single'
@@ -372,6 +373,7 @@ function App() {
             onAnnotationsCreated={handleAutoAnnotateResults}
             onBboxPromptModeChange={setIsBboxPromptMode}
             onAIPanelActiveChange={setIsAIPanelActive}
+            onTextPromptChange={setCurrentTextPrompt}
             promptBboxes={promptBboxes}
             onPromptBboxesChange={setPromptBboxes}
             currentAnnotations={currentAnnotations}
@@ -401,7 +403,12 @@ function App() {
                   <div className="text-gray-400 text-xs">
                     {currentImage.width} × {currentImage.height} px
                   </div>
-                  <AIModeIndicator mode={promptMode} isActive={isAIPanelActive} />
+                  <AIModeIndicator
+                    mode={promptMode}
+                    isActive={isAIPanelActive}
+                    textPrompt={currentTextPrompt}
+                    isProcessing={isAutoApplyLoading}
+                  />
                 </div>
               </div>
             )}
