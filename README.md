@@ -12,11 +12,13 @@ A modern, full-stack annotation platform combining **SAM3 AI-powered segmentatio
 - RESTful API with OpenAPI documentation
 
 ### Frontend (React Annotation Platform)
-- Interactive canvas-based annotation
-- Multiple annotation tools (rectangle, polygon, point)
-- Real-time annotation management
-- Modern UI with Tailwind CSS
-- Integration with SAM3 backend for AI-assisted labeling
+- **Local-First Storage** - All data stored in browser (IndexedDB), works offline, complete privacy
+- **Manual Annotation Tools** - Rectangle, polygon, and point drawing with full editing
+- **AI-Assisted Segmentation** - Text and bounding box prompts with single/auto-apply/batch modes
+- **Smart Management** - Filter by type, sort by confidence, bulk operations
+- **Export Ready** - COCO JSON and YOLO format export
+- **Keyboard Shortcuts** - Fast navigation and tool switching
+- **Modern UI** - Responsive canvas with zoom, pan, and Tailwind CSS styling
 
 ## Architecture
 
@@ -160,6 +162,7 @@ make docker-shell service=backend   # Shell into backend container
 - **React 18** + **TypeScript**
 - **Vite** - Next-generation build tool
 - **Konva** + **React-Konva** - Canvas manipulation
+- **IndexedDB** - Local browser storage for images and annotations
 - **Tailwind CSS** - Utility-first styling
 - **Axios** - HTTP client
 
@@ -189,9 +192,17 @@ backend/
 frontend/
 ├── src/
 │   ├── components/
-│   │   ├── Canvas.tsx       # Annotation canvas
-│   │   ├── Toolbar.tsx      # Tool selection
-│   │   └── Sidebar.tsx      # Annotations list
+│   │   ├── Canvas.tsx           # Annotation canvas
+│   │   ├── LeftSidebar.tsx      # Tool selection & AI prompts
+│   │   ├── Sidebar.tsx          # Annotations list
+│   │   ├── TextPromptPanel.tsx  # SAM3 text prompts
+│   │   ├── BboxPromptPanel.tsx  # SAM3 bbox prompts
+│   │   ├── ExportModal.tsx      # Export interface
+│   │   └── ui/                  # Reusable UI components
+│   ├── lib/
+│   │   ├── storage.ts           # IndexedDB persistence
+│   │   ├── sam3-client.ts       # SAM3 API client
+│   │   └── coco-export.ts       # Export utilities
 │   ├── App.tsx
 │   └── main.tsx
 ├── Dockerfile
@@ -226,13 +237,13 @@ Batch processing recommended for multiple images.
 ## Future Enhancements
 
 - [ ] CVAT integration for advanced labeling
-- [ ] Export annotations (COCO, YOLO, Pascal VOC)
-- [ ] Multi-user collaboration
-- [ ] Annotation history and versioning
-- [ ] Keyboard shortcuts for faster labeling
-- [ ] AI-assisted annotation with SAM3
+- [ ] Pascal VOC export format (COCO and YOLO already supported)
+- [ ] Multi-user collaboration and cloud sync
+- [ ] Annotation history and versioning with persistent undo/redo
+- [ ] Video annotation support
 - [ ] Project management and datasets
 - [ ] User authentication and authorization
+- [ ] Custom model integration (bring your own segmentation model)
 
 ## Troubleshooting
 

@@ -4,17 +4,23 @@ React-based annotation platform for image labeling, inspired by T-REX Label and 
 
 ## Features
 
-- Canvas-based image annotation
-- Multiple annotation tools (rectangle, polygon, point)
-- Real-time annotation management
-- SAM3 backend integration for AI-assisted segmentation
-- Responsive UI with Tailwind CSS
+- **Local-First Architecture** - All data stored in your browser (IndexedDB), works offline, complete privacy
+- **Manual Annotation Tools** - Rectangle, polygon, and point drawing with full editing capabilities
+- **AI-Assisted Segmentation** - SAM3-powered text and bounding box prompts with three modes:
+  - Single: Manual prompt submission
+  - Auto-Apply: Automatic segmentation when switching images
+  - Batch: Process multiple images at once
+- **Smart Annotation Management** - Filter by type, sort by confidence, bulk operations (delete, relabel, visibility toggle)
+- **Export Ready** - COCO JSON and YOLO format export
+- **Keyboard Shortcuts** - Fast navigation and tool switching
+- **Responsive Canvas** - Zoom, pan, and edit annotations with smooth Konva-based rendering
 
 ## Tech Stack
 
 - **React 18** + **TypeScript**
 - **Vite** - Fast build tool and dev server
 - **Konva** + **React-Konva** - Canvas manipulation for annotations
+- **IndexedDB** - Local browser storage for images and annotations
 - **Tailwind CSS** - Utility-first styling
 - **Axios** - HTTP client for API calls
 - **Lucide React** - Icon library
@@ -82,12 +88,44 @@ frontend/
 └── tailwind.config.js
 ```
 
+## How It Works
+
+The platform uses a **local-first architecture** where all your data stays in your browser:
+
+- **Images** - Stored as blobs in IndexedDB. Upload once, access anytime without re-uploading
+- **Annotations** - Automatically saved to IndexedDB as you draw. Supports rectangles, polygons, and points with full metadata (confidence scores, timestamps, visibility)
+- **Labels** - Color-coded categories stored locally with grouping support
+- **Privacy** - No server-side storage. Your images and annotations never leave your browser unless you explicitly export them
+
+**Benefits:**
+- Work offline after initial load
+- No file size limits from server
+- Complete data privacy
+- Instant save and load
+- Export when you're ready (COCO JSON, YOLO formats)
+
 ## Annotation Tools
 
-- **Select** - Select and modify existing annotations
+**Manual Tools:**
+- **Select** - Select and modify existing annotations (drag, resize, delete)
 - **Rectangle** - Draw bounding boxes
 - **Polygon** - Draw custom polygon shapes
 - **Point** - Add single point annotations
+
+**AI-Assisted Tools:**
+- **Text Prompt** - Describe what to segment (e.g., "person", "car"), SAM3 generates masks
+- **Bounding Box Prompt** - Draw rough boxes, SAM3 refines into precise polygons
+
+**Prompt Modes:**
+- **Single** - Submit one prompt at a time
+- **Auto-Apply** - Automatically segment when switching images (after first run)
+- **Batch** - Process multiple selected images with the same prompt
+
+**Management:**
+- Filter annotations by type (manual/AI-generated)
+- Sort by creation date or confidence score
+- Bulk operations (delete, change label, toggle visibility)
+- Low-confidence annotation cleanup
 
 ## Docker Deployment
 
@@ -108,11 +146,11 @@ The frontend communicates with the SAM3 backend API:
 ## Future Enhancements
 
 - CVAT integration for advanced labeling
-- Export annotations (COCO, YOLO, Pascal VOC formats)
-- Multi-user collaboration
-- Annotation history and versioning
-- Keyboard shortcuts for faster labeling
-- AI-assisted annotation with SAM3 backend
+- Pascal VOC export format
+- Multi-user collaboration and cloud sync
+- Annotation history and versioning with undo/redo beyond current session
+- Video annotation support
+- Custom model integration (bring your own segmentation model)
 
 ## References
 
