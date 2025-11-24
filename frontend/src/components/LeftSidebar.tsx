@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Upload, MousePointer, Square, Pentagon } from 'lucide-react'
+import { MousePointer, Square, Pentagon } from 'lucide-react'
 import { TextPromptPanel } from './TextPromptPanel'
 import { BboxPromptPanel } from './BboxPromptPanel'
 import type { Label, ImageData, Tool, PromptMode } from '@/types/annotations'
@@ -13,7 +13,6 @@ interface LeftSidebarProps {
   images: ImageData[]
   promptMode: PromptMode
   setPromptMode: (mode: PromptMode) => void
-  onImageUpload: (files: FileList) => void
   onAnnotationsCreated: (results: {
     boxes: Array<[number, number, number, number]>
     masks: Array<{ polygons: Array<Array<[number, number]>>; area: number }>
@@ -82,7 +81,6 @@ export function LeftSidebar({
   images,
   promptMode,
   setPromptMode,
-  onImageUpload,
   onAnnotationsCreated,
   onBboxPromptModeChange,
   onAIPanelActiveChange,
@@ -99,13 +97,6 @@ export function LeftSidebar({
     { id: 'rectangle', icon: <Square className="w-5 h-5" />, label: 'Rectangle' },
     { id: 'polygon', icon: <Pentagon className="w-5 h-5" />, label: 'Polygon' },
   ]
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files
-    if (files && files.length > 0) {
-      onImageUpload(files)
-    }
-  }
 
   const handleToolClick = (tool: ActiveTool) => {
     const newActiveTool = activeTool === tool ? null : tool
@@ -144,20 +135,6 @@ export function LeftSidebar({
     <div className="flex border-r border-gray-700">
       {/* Icon Bar */}
       <div className="w-16 bg-gray-800 flex flex-col items-center py-4 gap-2 border-r border-gray-700">
-        {/* Image Upload */}
-        <label className="cursor-pointer p-3 rounded hover:bg-gray-700 transition-colors" title="Upload Images">
-          <Upload className="w-5 h-5 text-gray-300" />
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleFileChange}
-            className="hidden"
-          />
-        </label>
-
-        <div className="w-full h-px bg-gray-700 my-2" />
-
         {/* Manual Annotation Tools */}
         {tools.map((tool) => (
           <button

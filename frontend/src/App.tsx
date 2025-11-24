@@ -369,7 +369,6 @@ function App() {
             images={images}
             promptMode={promptMode}
             setPromptMode={setPromptMode}
-            onImageUpload={handleImageUpload}
             onAnnotationsCreated={handleAutoAnnotateResults}
             onBboxPromptModeChange={setIsBboxPromptMode}
             onAIPanelActiveChange={setIsAIPanelActive}
@@ -452,32 +451,50 @@ function App() {
         </div>
 
         {/* Image Gallery - Bottom strip */}
-        {images.length > 0 && (
-          <div className="h-28 bg-gray-800 border-t border-gray-700 flex items-center px-4 gap-3">
-            {/* Previous button */}
-            <button
-              onClick={() => {
-                const prevIndex = currentImageIndex - 1
-                if (prevIndex >= 0) {
-                  setCurrentImageId(images[prevIndex].id)
-                }
-              }}
-              disabled={currentImageIndex <= 0}
-              className="p-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
+        <div className="h-28 bg-gray-800 border-t border-gray-700 flex items-center px-4 gap-3">
+          {/* Previous button */}
+          <button
+            onClick={() => {
+              const prevIndex = currentImageIndex - 1
+              if (prevIndex >= 0) {
+                setCurrentImageId(images[prevIndex].id)
+              }
+            }}
+            disabled={currentImageIndex <= 0 || images.length === 0}
+            className="p-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
 
-            {/* Thumbnails */}
-            <div className="flex-1 flex gap-2 overflow-x-auto py-2">
-              {images.map((image) => {
-                const imageUrl = URL.createObjectURL(image.blob)
-                // Count annotations for this specific image (not just current image's annotations)
-                const imageAnnotationCount = currentAnnotations.length > 0 && currentImageId === image.id ? currentAnnotations.length : 0
+          {/* Thumbnails */}
+          <div className="flex-1 flex gap-2 overflow-x-auto py-2">
+            {/* Upload placeholder button */}
+            <label className="flex-shrink-0 cursor-pointer group">
+              <div className="h-20 w-20 border-2 border-dashed border-gray-600 hover:border-orange-500 rounded flex flex-col items-center justify-center gap-1 transition-colors bg-gray-900/50 hover:bg-gray-900">
+                <Upload className="w-6 h-6 text-gray-400 group-hover:text-orange-500 transition-colors" />
+                <span className="text-xs text-gray-500 group-hover:text-orange-500 transition-colors">Add</span>
+              </div>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                onChange={(e) => {
+                  if (e.target.files) {
+                    handleImageUpload(e.target.files)
+                  }
+                }}
+              />
+            </label>
 
-                return (
+            {images.map((image) => {
+              const imageUrl = URL.createObjectURL(image.blob)
+              // Count annotations for this specific image (not just current image's annotations)
+              const imageAnnotationCount = currentAnnotations.length > 0 && currentImageId === image.id ? currentAnnotations.length : 0
+
+              return (
                   <div
                     key={image.id}
                     onClick={() => setCurrentImageId(image.id)}
@@ -524,15 +541,14 @@ function App() {
                   setCurrentImageId(images[nextIndex].id)
                 }
               }}
-              disabled={currentImageIndex >= images.length - 1}
+              disabled={currentImageIndex >= images.length - 1 || images.length === 0}
               className="p-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
-          </div>
-        )}
+        </div>
       </div>
 
       {/* Label Manager Modal */}
@@ -669,39 +685,6 @@ function App() {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Blocking Popup: No Images */}
-      {!loading && images.length === 0 && (
-        <Modal
-          isOpen={true}
-          onClose={() => {}}
-          title="No Images Loaded"
-          blocking={true}
-          showCloseButton={false}
-          maxWidth="md"
-        >
-          <div className="text-center space-y-4">
-            <Upload className="w-16 h-16 mx-auto text-gray-400" />
-            <p className="text-gray-300">
-              You need to upload at least one image before using the annotation tool.
-            </p>
-            <label className="inline-block px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded cursor-pointer transition-colors">
-              <input
-                type="file"
-                multiple
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files) {
-                    handleImageUpload(e.target.files)
-                  }
-                }}
-              />
-              Upload Images
-            </label>
-          </div>
-        </Modal>
       )}
 
       {/* Blocking Popup: No Labels */}
