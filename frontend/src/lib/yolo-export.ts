@@ -20,8 +20,7 @@ export interface YOLOExportData {
 export function exportToYOLO(
   images: ImageData[],
   annotations: Annotation[],
-  labels: Label[],
-  pathPrefix: string = ''
+  labels: Label[]
 ): YOLOExportData {
   // Create label ID to index mapping
   const labelIdMap = new Map<string, number>()

@@ -1,15 +1,14 @@
 import { useState, useEffect } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
-import Toolbar from './components/Toolbar'
+import { LeftSidebar } from './components/LeftSidebar'
 import Canvas from './components/Canvas'
 import Sidebar from './components/Sidebar'
 import { Modal } from './components/ui/Modal'
 import { ExportModal } from './components/ExportModal'
-import { AutoAnnotateModal } from './components/AutoAnnotateModal'
 import { useStorage } from './hooks/useStorage'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import type { Tool, Annotation, ImageData, PolygonAnnotation, RectangleAnnotation } from './types/annotations'
-import { Copy, RotateCcw, Download, Upload, Sparkles } from 'lucide-react'
+import { Copy, RotateCcw, Download, Upload } from 'lucide-react'
 import './App.css'
 
 function App() {
@@ -18,9 +17,10 @@ function App() {
   const [selectedLabelId, setSelectedLabelId] = useState<string | null>(null)
   const [showLabelManager, setShowLabelManager] = useState(false)
   const [showExportModal, setShowExportModal] = useState(false)
-  const [showAutoAnnotateModal, setShowAutoAnnotateModal] = useState(false)
   const [showResetModal, setShowResetModal] = useState(false)
   const [resetIncludeImages, setResetIncludeImages] = useState(false)
+  const [promptBboxes, setPromptBboxes] = useState<Array<{ x: number; y: number; width: number; height: number; id: string; labelId: string }>>([])
+  const [isBboxPromptMode, setIsBboxPromptMode] = useState(false)
 
   const {
     images,
@@ -77,6 +77,27 @@ function App() {
   }
 
   const handleAddAnnotation = async (annotation: Omit<Annotation, 'imageId' | 'labelId' | 'createdAt' | 'updatedAt'>) => {
+    // If in bbox-prompt mode and it's a rectangle, add to promptBboxes instead
+    if (isBboxPromptMode && annotation.type === 'rectangle') {
+      const rect = annotation as Omit<RectangleAnnotation, 'imageId' | 'labelId' | 'createdAt' | 'updatedAt'>
+
+      // Use the currently selected label, or the first available label
+      const labelIdToUse = selectedLabelId || (labels.length > 0 ? labels[0].id : '')
+
+      setPromptBboxes(prev => [
+        ...prev,
+        {
+          x: rect.x,
+          y: rect.y,
+          width: rect.width,
+          height: rect.height,
+          id: rect.id,
+          labelId: labelIdToUse,
+        }
+      ])
+      return
+    }
+
     if (!currentImageId || !selectedLabelId) return
 
     const now = Date.now()
@@ -118,8 +139,13 @@ function App() {
     masks: Array<{ polygons: Array<Array<[number, number]>>; area: number }>
     scores: number[]
     annotationType: 'bbox' | 'polygon'
+    labelId?: string
   }) => {
-    if (!currentImageId || !selectedLabelId) return
+    if (!currentImageId) return
+
+    // Use the labelId from results if provided, otherwise use selectedLabelId
+    const labelToUse = results.labelId || selectedLabelId
+    if (!labelToUse) return
 
     const now = Date.now()
 
@@ -137,7 +163,7 @@ function App() {
         const annotation: RectangleAnnotation = {
           id: `${Date.now()}-${i}`,
           imageId: currentImageId,
-          labelId: selectedLabelId,
+          labelId: labelToUse,
           type: 'rectangle',
           x,
           y,
@@ -166,7 +192,7 @@ function App() {
           const annotation: PolygonAnnotation = {
             id: `${Date.now()}-${i}`,
             imageId: currentImageId,
-            labelId: selectedLabelId,
+            labelId: labelToUse,
             type: 'polygon',
             points,
             createdAt: now,
@@ -290,14 +316,6 @@ function App() {
             </span>
           )}
           <button
-            onClick={() => setShowAutoAnnotateModal(true)}
-            disabled={!currentImage || labels.length === 0}
-            className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded transition-colors flex items-center gap-1.5"
-          >
-            <Sparkles className="w-4 h-4" />
-            Auto-Annotate
-          </button>
-          <button
             onClick={() => setShowExportModal(true)}
             disabled={annotations.length === 0}
             className="px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded transition-colors flex items-center gap-1.5"
@@ -324,11 +342,18 @@ function App() {
       {/* Main Layout */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <div className="flex-1 flex overflow-hidden">
-          {/* Toolbar */}
-          <Toolbar
+          {/* Left Sidebar */}
+          <LeftSidebar
             selectedTool={selectedTool}
             onToolChange={setSelectedTool}
+            labels={labels}
+            selectedLabelId={selectedLabelId}
+            currentImage={currentImage || null}
             onImageUpload={handleImageUpload}
+            onAnnotationsCreated={handleAutoAnnotateResults}
+            onBboxPromptModeChange={setIsBboxPromptMode}
+            promptBboxes={promptBboxes}
+            onPromptBboxesChange={setPromptBboxes}
           />
 
           {/* Canvas */}
@@ -367,6 +392,7 @@ function App() {
                 onUpdateAnnotation={handleUpdateAnnotation}
                 selectedAnnotation={selectedAnnotation}
                 onSelectAnnotation={setSelectedAnnotation}
+                promptBboxes={promptBboxes}
               />
             </div>
           </div>
@@ -713,16 +739,6 @@ function App() {
         images={images}
         annotations={annotations}
         labels={labels}
-      />
-
-      {/* Auto-Annotate Modal */}
-      <AutoAnnotateModal
-        isOpen={showAutoAnnotateModal}
-        onClose={() => setShowAutoAnnotateModal(false)}
-        currentImage={currentImage}
-        labels={labels}
-        selectedLabelId={selectedLabelId}
-        onAnnotationsCreated={handleAutoAnnotateResults}
       />
 
       {/* Toast Notifications */}

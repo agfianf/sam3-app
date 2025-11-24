@@ -36,7 +36,7 @@ export function ExportModal({
       const cocoData = exportToCOCO(modifiedImages, annotations, labels)
       await downloadCOCO(cocoData, 'annotations.json')
     } else {
-      const yoloData = exportToYOLO(images, annotations, labels, pathPrefix)
+      const yoloData = exportToYOLO(images, annotations, labels)
       await downloadYOLOFiles(yoloData)
     }
 

@@ -13,6 +13,7 @@ interface CanvasProps {
   onUpdateAnnotation: (annotation: Annotation) => void
   selectedAnnotation: string | null
   onSelectAnnotation: (id: string | null) => void
+  promptBboxes?: Array<{ x: number; y: number; width: number; height: number; id: string; labelId: string }>
 }
 
 export default function Canvas({
@@ -25,6 +26,7 @@ export default function Canvas({
   onUpdateAnnotation,
   selectedAnnotation,
   onSelectAnnotation,
+  promptBboxes = [],
 }: CanvasProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<Konva.Stage>(null)
@@ -698,6 +700,38 @@ export default function Canvas({
               )
             }
             return null
+          })}
+
+          {/* Prompt Bboxes (for bbox-prompt mode) */}
+          {promptBboxes.map((bbox) => {
+            const bboxLabel = getLabel(bbox.labelId)
+            const bboxColor = bboxLabel?.color || '#3b82f6'
+            const bboxLabelName = bboxLabel?.name || 'No Label'
+
+            return (
+              <React.Fragment key={`prompt-bbox-${bbox.id}`}>
+                <Rect
+                  x={bbox.x * scale}
+                  y={bbox.y * scale}
+                  width={bbox.width * scale}
+                  height={bbox.height * scale}
+                  stroke={bboxColor}
+                  strokeWidth={2}
+                  dash={[10, 5]}
+                  fill={`${bboxColor}1A`}
+                  listening={false}
+                />
+                <Text
+                  x={bbox.x * scale}
+                  y={bbox.y * scale - 20}
+                  text={`${bboxLabelName} (Prompt)`}
+                  fontSize={12}
+                  fill={bboxColor}
+                  padding={4}
+                  listening={false}
+                />
+              </React.Fragment>
+            )
           })}
 
           {/* Rectangle preview (point-to-point mode) */}
