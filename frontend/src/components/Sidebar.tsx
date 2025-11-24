@@ -2,17 +2,23 @@ import { useState } from 'react'
 import { Trash2, CheckSquare, Square, Filter, SortDesc, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Modal } from './ui/Modal'
 import { Button } from './ui/button'
-import type { Annotation, Label } from '../types/annotations'
+import { GroupedLabelSelector } from './GroupedLabelSelector'
+import type { Annotation, Label, LabelGroup } from '../types/annotations'
 
 interface SidebarProps {
   annotations: Annotation[]
   labels: Label[]
+  groups: LabelGroup[]
   selectedAnnotation: string | null
   selectedLabelId: string | null
+  expandedGroups: Record<string, boolean>
   onSelectAnnotation: (id: string) => void
   onSelectLabel: (id: string) => void
   onDeleteAnnotation: (id: string) => void
   onBulkDeleteAnnotations: (ids: string[]) => void
+  onToggleLabelVisibility: (labelId: string) => void
+  onToggleGroupVisibility: (groupId: string) => void
+  onToggleGroupExpanded: (groupId: string) => void
 }
 
 type FilterMode = 'all' | 'manual' | 'auto'
@@ -21,12 +27,17 @@ type SortMode = 'newest' | 'confidence-high' | 'confidence-low'
 export default function Sidebar({
   annotations,
   labels,
+  groups,
   selectedAnnotation,
   selectedLabelId,
+  expandedGroups,
   onSelectAnnotation,
   onSelectLabel,
   onDeleteAnnotation,
   onBulkDeleteAnnotations,
+  onToggleLabelVisibility,
+  onToggleGroupVisibility,
+  onToggleGroupExpanded,
 }: SidebarProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [filterMode, setFilterMode] = useState<FilterMode>('all')
@@ -177,26 +188,18 @@ export default function Sidebar({
 
       {/* Label Selector */}
       <div className="px-4 py-3 border-b border-gray-700 bg-gray-750">
-        <label className="block text-sm font-medium text-gray-300 mb-2">
-          Selected Label
-        </label>
-        <select
-          value={selectedLabelId || ''}
-          onChange={(e) => onSelectLabel(e.target.value)}
-          className="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-orange-500 focus:outline-none text-sm"
-        >
-          {labels.length === 0 ? (
-            <option value="">No labels available</option>
-          ) : (
-            labels.map(label => (
-              <option key={label.id} value={label.id}>
-                {label.name}
-              </option>
-            ))
-          )}
-        </select>
+        <GroupedLabelSelector
+          labels={labels}
+          groups={groups}
+          selectedLabelId={selectedLabelId}
+          onSelectLabel={onSelectLabel}
+          onToggleLabelVisibility={onToggleLabelVisibility}
+          onToggleGroupVisibility={onToggleGroupVisibility}
+          onToggleGroupExpanded={onToggleGroupExpanded}
+          expandedGroups={expandedGroups}
+        />
         {selectedLabel && (
-          <div className="mt-2 flex items-center gap-2 text-sm text-gray-400">
+          <div className="mt-3 flex items-center gap-2 px-2 py-2 bg-gray-800/50 rounded text-sm text-gray-400">
             <div
               className="w-4 h-4 rounded"
               style={{ backgroundColor: selectedLabel.color }}

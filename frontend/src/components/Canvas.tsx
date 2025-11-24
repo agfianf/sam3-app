@@ -1,13 +1,14 @@
 import Konva from 'konva'
 import React, { useEffect, useRef, useState } from 'react'
 import { Circle, Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from 'react-konva'
-import type { Annotation, Label, PolygonAnnotation, RectangleAnnotation, Tool } from '../types/annotations'
+import type { Annotation, Label, LabelGroup, PolygonAnnotation, RectangleAnnotation, Tool } from '../types/annotations'
 
 interface CanvasProps {
   image: string | null
   selectedTool: Tool
   annotations: Annotation[]
   labels: Label[]
+  groups: LabelGroup[]
   selectedLabelId: string | null
   onAddAnnotation: (annotation: Omit<Annotation, 'imageId' | 'labelId' | 'createdAt' | 'updatedAt'>) => void
   onUpdateAnnotation: (annotation: Annotation) => void
@@ -25,6 +26,7 @@ export default function Canvas({
   selectedTool,
   annotations,
   labels,
+  groups,
   selectedLabelId,
   onAddAnnotation,
   onUpdateAnnotation,
@@ -138,6 +140,25 @@ export default function Canvas({
 
   const getLabel = (labelId: string) => {
     return labels.find(l => l.id === labelId)
+  }
+
+  // Check if an annotation should be visible based on label and group visibility
+  const isAnnotationVisible = (annotation: Annotation): boolean => {
+    const label = getLabel(annotation.labelId)
+    if (!label) return false // Hide annotations with missing labels
+
+    // Check label visibility (default to true if undefined)
+    const labelVisible = label.isVisible ?? true
+    if (!labelVisible) return false
+
+    // Check parent group visibility (if label belongs to a group)
+    if (label.groupId) {
+      const group = groups.find(g => g.id === label.groupId)
+      const groupVisible = group?.isVisible ?? true
+      if (!groupVisible) return false
+    }
+
+    return true
   }
 
   const calculateDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }) => {
@@ -651,7 +672,7 @@ export default function Canvas({
           )}
 
           {/* Existing annotations */}
-          {annotations.map((annotation) => {
+          {annotations.filter(isAnnotationVisible).map((annotation) => {
             const label = getLabel(annotation.labelId)
             const color = label?.color || '#f97316'
             const labelName = label?.name || 'Unknown'

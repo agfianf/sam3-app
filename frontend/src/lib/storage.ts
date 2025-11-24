@@ -1,13 +1,14 @@
-import type { ImageData, Annotation, Label } from '@/types/annotations'
+import type { ImageData, Annotation, Label, LabelGroup } from '@/types/annotations'
 
 const DB_NAME = 'sam3-annotation-db'
-const DB_VERSION = 1
+const DB_VERSION = 2 // Incremented for label groups feature
 
 // Object store names
 const STORES = {
   IMAGES: 'images',
   ANNOTATIONS: 'annotations',
   LABELS: 'labels',
+  LABEL_GROUPS: 'labelGroups',
 }
 
 // Initialize IndexedDB
@@ -20,6 +21,8 @@ export function openDB(): Promise<IDBDatabase> {
 
     request.onupgradeneeded = (event) => {
       const db = (event.target as IDBOpenDBRequest).result
+      const transaction = (event.target as IDBOpenDBRequest).transaction!
+      const oldVersion = event.oldVersion
 
       // Create images store
       if (!db.objectStoreNames.contains(STORES.IMAGES)) {
@@ -38,6 +41,35 @@ export function openDB(): Promise<IDBDatabase> {
       if (!db.objectStoreNames.contains(STORES.LABELS)) {
         const labelsStore = db.createObjectStore(STORES.LABELS, { keyPath: 'id' })
         labelsStore.createIndex('name', 'name', { unique: true })
+      }
+
+      // Create label groups store (v2)
+      if (!db.objectStoreNames.contains(STORES.LABEL_GROUPS)) {
+        const labelGroupsStore = db.createObjectStore(STORES.LABEL_GROUPS, { keyPath: 'id' })
+        labelGroupsStore.createIndex('createdAt', 'createdAt', { unique: false })
+      }
+
+      // Migration: Update existing labels with new fields (v1 -> v2)
+      if (oldVersion < 2 && db.objectStoreNames.contains(STORES.LABELS)) {
+        const labelsStore = transaction.objectStore(STORES.LABELS)
+        const getAllRequest = labelsStore.getAll()
+
+        getAllRequest.onsuccess = () => {
+          const labels = getAllRequest.result as Label[]
+          labels.forEach((label) => {
+            // Add default values for new optional fields
+            if (label.isVisible === undefined) {
+              label.isVisible = true
+            }
+            if (label.groupId === undefined) {
+              label.groupId = undefined // Explicitly set to undefined (ungrouped)
+            }
+            if (label.sortOrder === undefined) {
+              label.sortOrder = 0
+            }
+            labelsStore.put(label)
+          })
+        }
       }
     }
   })
@@ -164,8 +196,94 @@ export const labelStorage = {
   remove: (id: string) => remove(STORES.LABELS, id),
   clear: () => clear(STORES.LABELS),
 
+  // Get labels grouped by their groupId
+  getGrouped: async (): Promise<Record<string, Label[]>> => {
+    const labels = await labelStorage.getAll()
+    const grouped: Record<string, Label[]> = {}
+
+    labels.forEach(label => {
+      const groupId = label.groupId || 'ungrouped'
+      if (!grouped[groupId]) {
+        grouped[groupId] = []
+      }
+      grouped[groupId].push(label)
+    })
+
+    // Sort labels within each group by sortOrder
+    Object.values(grouped).forEach(group => {
+      group.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0))
+    })
+
+    return grouped
+  },
+
   // Initialize default labels if none exist (disabled - starts empty)
   initializeDefaults: async (): Promise<void> => {
     // No default labels - user must create them
+  },
+}
+
+// Label group operations
+export const labelGroupStorage = {
+  getAll: () => getAll<LabelGroup>(STORES.LABEL_GROUPS),
+  getById: (id: string) => getById<LabelGroup>(STORES.LABEL_GROUPS, id),
+  add: (group: LabelGroup) => add(STORES.LABEL_GROUPS, group),
+  update: (group: LabelGroup) => update(STORES.LABEL_GROUPS, group),
+  remove: async (id: string): Promise<void> => {
+    // When removing a group, ungroup all labels in that group
+    const labels = await labelStorage.getAll()
+    const labelsInGroup = labels.filter(l => l.groupId === id)
+
+    await Promise.all(labelsInGroup.map(label => {
+      label.groupId = undefined
+      return labelStorage.update(label)
+    }))
+
+    return remove(STORES.LABEL_GROUPS, id)
+  },
+  clear: () => clear(STORES.LABEL_GROUPS),
+}
+
+// LocalStorage keys for UI state persistence
+const LOCAL_STORAGE_KEYS = {
+  GROUP_EXPANDED_STATES: 'sam3-group-expanded-states',
+}
+
+// Group UI state utilities (localStorage-based for lightweight persistence)
+export const groupUIState = {
+  // Get all expanded states
+  getExpandedStates: (): Record<string, boolean> => {
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEYS.GROUP_EXPANDED_STATES)
+      return stored ? JSON.parse(stored) : {}
+    } catch {
+      return {}
+    }
+  },
+
+  // Set expanded state for a specific group
+  setExpandedState: (groupId: string, isExpanded: boolean): void => {
+    try {
+      const states = groupUIState.getExpandedStates()
+      states[groupId] = isExpanded
+      localStorage.setItem(LOCAL_STORAGE_KEYS.GROUP_EXPANDED_STATES, JSON.stringify(states))
+    } catch (error) {
+      console.error('Failed to save group expanded state:', error)
+    }
+  },
+
+  // Get expanded state for a specific group (default: true)
+  getExpandedState: (groupId: string): boolean => {
+    const states = groupUIState.getExpandedStates()
+    return states[groupId] ?? true // Default to expanded
+  },
+
+  // Clear all expanded states
+  clearExpandedStates: (): void => {
+    try {
+      localStorage.removeItem(LOCAL_STORAGE_KEYS.GROUP_EXPANDED_STATES)
+    } catch (error) {
+      console.error('Failed to clear group expanded states:', error)
+    }
   },
 }

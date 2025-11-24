@@ -7,12 +7,26 @@ export type AnnotationType = 'rectangle' | 'polygon' | 'point'
 // Prompt mode types
 export type PromptMode = 'single' | 'auto-apply' | 'batch'
 
+// Label group definition
+export interface LabelGroup {
+  id: string
+  name: string
+  isExpanded?: boolean // UI state: expanded/collapsed
+  isVisible?: boolean // Group-level visibility toggle (affects all child labels)
+  sortOrder?: number // Custom ordering
+  createdAt: number
+}
+
 // Label definition
 export interface Label {
   id: string
   name: string
   color: string
   createdAt: number
+  // Group and visibility fields (optional for backward compatibility)
+  groupId?: string // Parent group ID (null/undefined = ungrouped)
+  isVisible?: boolean // Individual label visibility toggle (default: true)
+  sortOrder?: number // Custom ordering within group
 }
 
 // Base annotation interface
