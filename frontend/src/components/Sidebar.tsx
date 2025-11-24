@@ -410,10 +410,32 @@ export default function Sidebar({
               const allSelected = labelAnnotations.length > 0 && labelAnnotations.every(a => selectedIds.has(a.id))
               const someSelected = labelAnnotations.some(a => selectedIds.has(a.id)) && !allSelected
 
+              // Check visibility state - all visible, all hidden, or mixed
+              const allVisible = labelAnnotations.length > 0 && labelAnnotations.every(a => a.isVisible ?? true)
+              const allHidden = labelAnnotations.length > 0 && labelAnnotations.every(a => !(a.isVisible ?? true))
+
               return (
                 <div key={label.id} className="border-b border-gray-700">
                   {/* Label Header */}
-                  <div className="px-3 py-2 bg-gray-750 hover:bg-gray-700/50 transition-colors flex items-center gap-2">
+                  <div className={`px-3 py-2 transition-colors flex items-center gap-2 ${
+                    selectedLabelId === label.id
+                      ? 'bg-orange-500/20 border-l-4 border-orange-500'
+                      : 'bg-gray-750 hover:bg-gray-700/50'
+                  }`}>
+                    {/* Active Label Indicator (Radio Button) */}
+                    {selectedLabelId === label.id && (
+                      <div
+                        className="w-3 h-3 rounded-full bg-orange-500 flex-shrink-0"
+                        title="Active label for drawing"
+                      />
+                    )}
+                    {selectedLabelId !== label.id && (
+                      <div
+                        className="w-3 h-3 rounded-full border-2 border-gray-500 flex-shrink-0"
+                        title="Click label name to set as active"
+                      />
+                    )}
+
                     {/* Select All Checkbox */}
                     {labelAnnotations.length > 0 && (
                       <button
@@ -460,11 +482,9 @@ export default function Sidebar({
 
                     {/* Label Name */}
                     <button
-                      onClick={() => {
-                        toggleLabelExpanded(label.id)
-                        onSelectLabel(label.id)
-                      }}
+                      onClick={() => toggleLabelExpanded(label.id)}
                       className="flex-1 text-left text-sm font-medium text-white truncate"
+                      title="Expand/collapse label group"
                     >
                       {label.name}
                     </button>
@@ -478,9 +498,13 @@ export default function Sidebar({
                     <button
                       onClick={() => toggleLabelVisibility(label.id)}
                       className="p-1 hover:bg-gray-600 rounded transition-colors text-gray-400 hover:text-white"
-                      title="Toggle visibility for all annotations in this label"
+                      title={allHidden ? "Show all annotations in this label" : "Hide all annotations in this label"}
                     >
-                      <Eye className="w-4 h-4" />
+                      {allHidden ? (
+                        <EyeOff className="w-4 h-4" />
+                      ) : (
+                        <Eye className="w-4 h-4" />
+                      )}
                     </button>
                   </div>
 

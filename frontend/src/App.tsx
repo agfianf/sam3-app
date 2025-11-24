@@ -13,6 +13,7 @@ import { useHistory } from './hooks/useHistory'
 import type { Tool, Annotation, ImageData, PolygonAnnotation, RectangleAnnotation, PromptMode } from './types/annotations'
 import { annotationStorage } from './lib/storage'
 import { Copy, RotateCcw, Download, Upload, Trash2, Loader2 } from 'lucide-react'
+import { PRESET_COLORS, DEFAULT_LABEL_COLOR } from './lib/colors'
 import './App.css'
 
 // Thumbnail component to prevent re-creating blob URLs on every render
@@ -98,6 +99,7 @@ function App() {
     return (saved as PromptMode) || 'single'
   })
   const [isAutoApplyLoading, setIsAutoApplyLoading] = useState(false)
+  const [selectedColor, setSelectedColor] = useState<string>(DEFAULT_LABEL_COLOR)
 
   // Zoom and pan state
   const [zoomLevel, setZoomLevel] = useState(1)
@@ -640,6 +642,7 @@ function App() {
             onToolChange={setSelectedTool}
             labels={labels}
             selectedLabelId={selectedLabelId}
+            onSelectLabel={setSelectedLabelId}
             currentImage={currentImage || null}
             images={images}
             promptMode={promptMode}
@@ -880,13 +883,12 @@ function App() {
                   e.preventDefault()
                   const formData = new FormData(e.currentTarget)
                   const name = formData.get('name') as string
-                  const color = formData.get('color') as string
 
-                  if (name && color) {
+                  if (name) {
                     const newLabel = {
                       id: Date.now().toString(),
                       name,
-                      color,
+                      color: selectedColor,
                       createdAt: Date.now(),
                     }
                     addLabel(newLabel)
@@ -903,55 +905,34 @@ function App() {
                   required
                   className="w-full px-3 py-2 bg-gray-700 text-white rounded border border-gray-600 focus:border-orange-500 focus:outline-none"
                 />
-                <div className="flex gap-2">
-                  <input
-                    type="color"
-                    name="color"
-                    defaultValue="#f97316"
-                    className="w-16 h-10 bg-gray-700 rounded border border-gray-600"
-                  />
-                  <button
-                    type="submit"
-                    className="flex-1 px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded transition-colors"
-                  >
-                    Add Label
-                  </button>
+
+                {/* Color Palette Grid */}
+                <div>
+                  <label className="text-sm text-gray-400 mb-2 block">Choose Color</label>
+                  <div className="grid grid-cols-5 gap-2">
+                    {PRESET_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        onClick={() => setSelectedColor(color)}
+                        className={`w-10 h-10 rounded transition-all ${
+                          selectedColor === color
+                            ? 'ring-2 ring-white ring-offset-2 ring-offset-gray-800 scale-110'
+                            : 'hover:scale-105'
+                        }`}
+                        style={{ backgroundColor: color }}
+                        title={color}
+                      />
+                    ))}
+                  </div>
                 </div>
-                <div className="flex gap-2 mt-2">
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      const form = e.currentTarget.closest('form')
-                      const colorInput = form?.querySelector('input[name="color"]') as HTMLInputElement
-                      if (colorInput) colorInput.value = '#f97316'
-                    }}
-                    className="px-3 py-1 text-xs bg-orange-600 hover:bg-orange-700 text-white rounded"
-                  >
-                    Orange
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      const form = e.currentTarget.closest('form')
-                      const colorInput = form?.querySelector('input[name="color"]') as HTMLInputElement
-                      if (colorInput) colorInput.value = '#6b7280'
-                    }}
-                    className="px-3 py-1 text-xs bg-gray-600 hover:bg-gray-500 text-white rounded"
-                  >
-                    Gray
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      const form = e.currentTarget.closest('form')
-                      const colorInput = form?.querySelector('input[name="color"]') as HTMLInputElement
-                      if (colorInput) colorInput.value = '#111827'
-                    }}
-                    className="px-3 py-1 text-xs bg-gray-900 hover:bg-gray-800 text-white rounded border border-gray-700"
-                  >
-                    Dark
-                  </button>
-                </div>
+
+                <button
+                  type="submit"
+                  className="w-full px-4 py-2 bg-orange-600 hover:bg-orange-700 text-white rounded transition-colors"
+                >
+                  Add Label
+                </button>
               </form>
             </div>
           </div>
