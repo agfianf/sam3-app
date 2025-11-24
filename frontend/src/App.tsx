@@ -12,6 +12,70 @@ import type { Tool, Annotation, ImageData, PolygonAnnotation, RectangleAnnotatio
 import { Copy, RotateCcw, Download, Upload, Trash2, Loader2 } from 'lucide-react'
 import './App.css'
 
+// Thumbnail component to prevent re-creating blob URLs on every render
+interface ImageThumbnailProps {
+  image: ImageData
+  isActive: boolean
+  annotationCount: number
+  onClick: () => void
+  onDelete: (e: React.MouseEvent) => void
+}
+
+const ImageThumbnail = ({
+  image,
+  isActive,
+  onClick,
+  onDelete,
+  annotationCount
+}: ImageThumbnailProps) => {
+  const [thumbnailUrl, setThumbnailUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    // Create URL only once when component mounts or image changes
+    const url = URL.createObjectURL(image.blob)
+    setThumbnailUrl(url)
+
+    // Cleanup: revoke URL when component unmounts or image changes
+    return () => URL.revokeObjectURL(url)
+  }, [image.blob])
+
+  // Show loading placeholder while URL is being created
+  if (!thumbnailUrl) {
+    return (
+      <div className="h-20 w-20 bg-gray-800 animate-pulse rounded border-2 border-gray-600" />
+    )
+  }
+
+  return (
+    <div
+      onClick={onClick}
+      className={`group relative flex-shrink-0 cursor-pointer rounded overflow-hidden border-2 transition-all ${
+        isActive
+          ? 'border-orange-500 ring-2 ring-orange-500/50'
+          : 'border-gray-600 hover:border-gray-500'
+      }`}
+    >
+      <img
+        src={thumbnailUrl}
+        alt={image.name}
+        className="h-20 w-auto object-contain bg-gray-900"
+      />
+      {annotationCount > 0 && (
+        <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs px-1.5 py-0.5 rounded">
+          {annotationCount}
+        </div>
+      )}
+      <button
+        onClick={onDelete}
+        className="absolute top-1 left-1 p-1 bg-red-600 hover:bg-red-700 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
+        title="Delete image"
+      >
+        <Trash2 className="w-3 h-3" />
+      </button>
+    </div>
+  )
+}
+
 function App() {
   const [selectedTool, setSelectedTool] = useState<Tool>('select')
   const [selectedAnnotation, setSelectedAnnotation] = useState<string | null>(null)
@@ -490,47 +554,25 @@ function App() {
             </label>
 
             {images.map((image) => {
-              const imageUrl = URL.createObjectURL(image.blob)
-              // Count annotations for this specific image (not just current image's annotations)
-              const imageAnnotationCount = currentAnnotations.length > 0 && currentImageId === image.id ? currentAnnotations.length : 0
+              // Count annotations for this specific image
+              const imageAnnotationCount = annotations.filter(a => a.imageId === image.id).length
 
               return (
-                  <div
-                    key={image.id}
-                    onClick={() => setCurrentImageId(image.id)}
-                    className={`group relative flex-shrink-0 cursor-pointer rounded overflow-hidden border-2 transition-all ${
-                      currentImageId === image.id
-                        ? 'border-orange-500 ring-2 ring-orange-500/50'
-                        : 'border-gray-600 hover:border-gray-500'
-                    }`}
-                  >
-                    <img
-                      src={imageUrl}
-                      alt={image.name}
-                      className="h-20 w-auto object-contain bg-gray-900"
-                      onLoad={() => URL.revokeObjectURL(imageUrl)}
-                    />
-                    {imageAnnotationCount > 0 && (
-                      <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs px-1.5 py-0.5 rounded">
-                        {imageAnnotationCount}
-                      </div>
-                    )}
-                    {/* Delete button - appears on hover */}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (window.confirm(`Delete "${image.name}"? This will also remove all associated annotations.`)) {
-                          removeImage(image.id)
-                        }
-                      }}
-                      className="absolute top-1 left-1 p-1 bg-red-600 hover:bg-red-700 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
-                      title="Delete image"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </button>
-                  </div>
-                )
-              })}
+                <ImageThumbnail
+                  key={image.id}
+                  image={image}
+                  isActive={currentImageId === image.id}
+                  annotationCount={imageAnnotationCount}
+                  onClick={() => setCurrentImageId(image.id)}
+                  onDelete={(e) => {
+                    e.stopPropagation()
+                    if (window.confirm(`Delete "${image.name}"? This will also remove all associated annotations.`)) {
+                      removeImage(image.id)
+                    }
+                  }}
+                />
+              )
+            })}
             </div>
 
             {/* Next button */}
