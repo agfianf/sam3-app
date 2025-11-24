@@ -188,6 +188,7 @@ export function LeftSidebar({
           labels={labels}
           selectedLabelId={selectedLabelId}
           onSelectLabel={onSelectLabel}
+          disabled={activeTool === 'bbox-prompt'}
         />
 
         <div className="w-full h-px bg-gray-700 my-2" />
