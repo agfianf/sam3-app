@@ -1,5 +1,5 @@
 import Konva from 'konva'
-import React, { useEffect, useRef, useState, useMemo } from 'react'
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
 import { Circle, Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from 'react-konva'
 import type { Annotation, Label, PolygonAnnotation, RectangleAnnotation, Tool } from '../types/annotations'
 
@@ -39,6 +39,7 @@ export default function Canvas({
   const containerRef = useRef<HTMLDivElement>(null)
   const stageRef = useRef<Konva.Stage>(null)
   const transformerRef = useRef<Konva.Transformer>(null)
+  const animationFrameRef = useRef<number | null>(null)
   const [konvaImage, setKonvaImage] = useState<HTMLImageElement | null>(null)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
   const [scale, setScale] = useState(1)
@@ -114,6 +115,15 @@ export default function Canvas({
     return () => window.removeEventListener('resize', handleResize)
   }, [konvaImage])
 
+  // Cleanup animation frame on unmount
+  useEffect(() => {
+    return () => {
+      if (animationFrameRef.current !== null) {
+        cancelAnimationFrame(animationFrameRef.current)
+      }
+    }
+  }, [])
+
   // Update transformer when selection changes (only for rectangles)
   useEffect(() => {
     if (transformerRef.current && stageRef.current && selectedTool === 'select') {
@@ -137,21 +147,30 @@ export default function Canvas({
     }
   }, [selectedAnnotation, selectedTool, annotations])
 
+  // Create label lookup map for O(1) access instead of O(n) search
+  const labelMap = useMemo(() => {
+    const map = new Map<string, Label>()
+    labels.forEach(label => map.set(label.id, label))
+    return map
+  }, [labels])
+
   const getLabel = (labelId: string) => {
-    return labels.find(l => l.id === labelId)
+    return labelMap.get(labelId)
   }
 
   // Check if an annotation should be visible based on annotation visibility
-  const isAnnotationVisible = (annotation: Annotation): boolean => {
-    // Check annotation's own visibility (default to true if undefined)
-    const annotationVisible = annotation.isVisible ?? true
-    if (!annotationVisible) return false
+  const isAnnotationVisible = useMemo(() => {
+    return (annotation: Annotation): boolean => {
+      // Check annotation's own visibility (default to true if undefined)
+      const annotationVisible = annotation.isVisible ?? true
+      if (!annotationVisible) return false
 
-    const label = getLabel(annotation.labelId)
-    if (!label) return false // Hide annotations with missing labels
+      const label = labelMap.get(annotation.labelId)
+      if (!label) return false // Hide annotations with missing labels
 
-    return true
-  }
+      return true
+    }
+  }, [labelMap])
 
   const calculateDistance = (p1: { x: number; y: number }, p2: { x: number; y: number }) => {
     return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2))
@@ -287,7 +306,7 @@ export default function Canvas({
     }
   }
 
-  const handleMouseMove = (e: any) => {
+  const handleMouseMove = useCallback((e: any) => {
     const stage = e.target.getStage()
     const pos = stage.getPointerPosition()
 
@@ -303,46 +322,56 @@ export default function Canvas({
       return
     }
 
-    // Get Stage position in the page
-    const stageBox = stage.container().getBoundingClientRect()
+    // Cancel any pending animation frame to avoid duplicate updates
+    if (animationFrameRef.current !== null) {
+      cancelAnimationFrame(animationFrameRef.current)
+    }
 
-    // Get container position to calculate relative coordinates
-    const containerBox = containerRef.current?.getBoundingClientRect()
+    // Throttle state updates using requestAnimationFrame (max 60fps)
+    animationFrameRef.current = requestAnimationFrame(() => {
+      // Get Stage position in the page
+      const stageBox = stage.container().getBoundingClientRect()
 
-    // Convert to original image coordinates (account for both zoom and autofit scale)
-    const originalX = (pos.x - stagePosition.x) / (scale * zoomLevel)
-    const originalY = (pos.y - stagePosition.y) / (scale * zoomLevel)
+      // Get container position to calculate relative coordinates
+      const containerBox = containerRef.current?.getBoundingClientRect()
 
-    // Update mouse position for coordinate display (hide when in pan mode)
-    if (!isPanMode && (selectedTool === 'rectangle' || selectedTool === 'polygon')) {
-      setMousePosition({ x: Math.round(originalX), y: Math.round(originalY) })
+      // Convert to original image coordinates (account for both zoom and autofit scale)
+      const originalX = (pos.x - stagePosition.x) / (scale * zoomLevel)
+      const originalY = (pos.y - stagePosition.y) / (scale * zoomLevel)
 
-      // Calculate position relative to container (not screen)
-      if (containerBox) {
-        const containerRelativeX = stageBox.left - containerBox.left + pos.x
-        const containerRelativeY = stageBox.top - containerBox.top + pos.y
-        setCursorScreenPosition({ x: containerRelativeX, y: containerRelativeY })
+      // Update mouse position for coordinate display (hide when in pan mode)
+      if (!isPanMode && (selectedTool === 'rectangle' || selectedTool === 'polygon')) {
+        setMousePosition({ x: Math.round(originalX), y: Math.round(originalY) })
+
+        // Calculate position relative to container (not screen)
+        if (containerBox) {
+          const containerRelativeX = stageBox.left - containerBox.left + pos.x
+          const containerRelativeY = stageBox.top - containerBox.top + pos.y
+          setCursorScreenPosition({ x: containerRelativeX, y: containerRelativeY })
+        }
+      } else {
+        setMousePosition(null)
+        setCursorScreenPosition(null)
       }
-    } else {
-      setMousePosition(null)
-      setCursorScreenPosition(null)
-    }
 
-    // Check if near first point for polygon (not in pan mode)
-    if (!isPanMode && selectedTool === 'polygon' && polygonPoints.length >= 3) {
-      const distance = calculateDistance({ x: originalX, y: originalY }, polygonPoints[0])
-      setIsNearFirstPoint(distance <= SNAP_DISTANCE)
-    } else {
-      setIsNearFirstPoint(false)
-    }
+      // Check if near first point for polygon (not in pan mode)
+      if (!isPanMode && selectedTool === 'polygon' && polygonPoints.length >= 3) {
+        const distance = calculateDistance({ x: originalX, y: originalY }, polygonPoints[0])
+        setIsNearFirstPoint(distance <= SNAP_DISTANCE)
+      } else {
+        setIsNearFirstPoint(false)
+      }
 
-    // Update rectangle preview when start point is set (not in pan mode)
-    if (!isPanMode && selectedTool === 'rectangle' && rectangleStartPoint) {
-      const width = originalX - rectangleStartPoint.x
-      const height = originalY - rectangleStartPoint.y
-      setCurrentRectangle([rectangleStartPoint.x, rectangleStartPoint.y, width, height])
-    }
-  }
+      // Update rectangle preview when start point is set (not in pan mode)
+      if (!isPanMode && selectedTool === 'rectangle' && rectangleStartPoint) {
+        const width = originalX - rectangleStartPoint.x
+        const height = originalY - rectangleStartPoint.y
+        setCurrentRectangle([rectangleStartPoint.x, rectangleStartPoint.y, width, height])
+      }
+
+      animationFrameRef.current = null
+    })
+  }, [isDraggingStage, stageDragStart, isPanMode, selectedTool, onStagePositionChange, stagePosition.x, stagePosition.y, scale, zoomLevel, polygonPoints, rectangleStartPoint])
 
   const handleMouseUp = () => {
     // Rectangle creation now happens on second click in handleMouseDown
@@ -657,7 +686,7 @@ export default function Canvas({
   const visibleAnnotations = useMemo(() => {
     console.log('[RENDER] Filtering annotations')
     return annotations.filter(isAnnotationVisible)
-  }, [annotations])
+  }, [annotations, isAnnotationVisible])
 
   if (!image) {
     return (

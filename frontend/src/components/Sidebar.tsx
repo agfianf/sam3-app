@@ -17,6 +17,7 @@ interface SidebarProps {
   onBulkDeleteAnnotations: (ids: string[]) => void
   onBulkChangeLabel: (annotationIds: string[], newLabelId: string) => void
   onToggleAnnotationVisibility: (annotationId: string) => void
+  onBulkToggleVisibility: (annotationIds: string[]) => void
   isCollapsed: boolean
   onToggleCollapse: () => void
 }
@@ -32,6 +33,7 @@ export default function Sidebar({
   onBulkDeleteAnnotations,
   onBulkChangeLabel,
   onToggleAnnotationVisibility,
+  onBulkToggleVisibility,
   isCollapsed,
   onToggleCollapse,
 }: SidebarProps) {
@@ -170,9 +172,11 @@ export default function Sidebar({
   // Toggle visibility for all annotations under a label
   const toggleLabelVisibility = (labelId: string) => {
     const labelAnnotations = annotationsByLabel[labelId] || []
-    labelAnnotations.forEach(ann => {
-      onToggleAnnotationVisibility(ann.id)
-    })
+    const annotationIds = labelAnnotations.map(ann => ann.id)
+
+    if (annotationIds.length > 0) {
+      onBulkToggleVisibility(annotationIds)
+    }
   }
 
   // Get confidence color

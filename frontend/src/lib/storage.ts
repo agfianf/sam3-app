@@ -186,9 +186,23 @@ export const annotationStorage = {
   },
   clear: () => clear(STORES.ANNOTATIONS),
 
-  // Bulk update operations
+  // Bulk update operations - optimized with single transaction
   updateMany: async (annotations: Annotation[]): Promise<void> => {
-    await Promise.all(annotations.map(ann => annotationStorage.update(ann)))
+    if (annotations.length === 0) return
+
+    const db = await openDB()
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction(STORES.ANNOTATIONS, 'readwrite')
+      const store = transaction.objectStore(STORES.ANNOTATIONS)
+
+      // Queue all updates in single transaction
+      annotations.forEach(annotation => {
+        store.put(annotation)
+      })
+
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = () => reject(transaction.error)
+    })
   },
 
   // Bulk change label for multiple annotations

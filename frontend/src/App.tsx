@@ -120,6 +120,7 @@ function App() {
     updateAnnotation,
     removeAnnotation,
     removeManyAnnotations,
+    bulkToggleAnnotationVisibility,
     addLabel,
     removeLabel,
     resetAll,
@@ -281,6 +282,17 @@ function App() {
       await updateAnnotation(updatedAnnotation)
     } catch (error) {
       console.error('Failed to toggle annotation visibility:', error)
+      toast.error('Failed to toggle visibility')
+    }
+  }
+
+  const handleBulkToggleVisibility = async (annotationIds: string[]) => {
+    if (annotationIds.length === 0) return
+
+    try {
+      await bulkToggleAnnotationVisibility(annotationIds)
+    } catch (error) {
+      console.error('Failed to bulk toggle visibility:', error)
       toast.error('Failed to toggle visibility')
     }
   }
@@ -739,6 +751,7 @@ function App() {
             onBulkDeleteAnnotations={handleBulkDeleteAnnotations}
             onBulkChangeLabel={handleBulkChangeLabel}
             onToggleAnnotationVisibility={handleToggleAnnotationVisibility}
+            onBulkToggleVisibility={handleBulkToggleVisibility}
             isCollapsed={isRightSidebarCollapsed}
             onToggleCollapse={() => setIsRightSidebarCollapsed(prev => !prev)}
           />

@@ -86,6 +86,20 @@ export function useStorage() {
     setAnnotations(prev => prev.filter(ann => !ids.includes(ann.id)))
   }, [])
 
+  const bulkToggleAnnotationVisibility = useCallback(async (ids: string[]) => {
+    // Perform bulk toggle in storage (single transaction)
+    await annotationStorage.bulkToggleVisibility(ids)
+
+    // Update state in single operation
+    setAnnotations(prev =>
+      prev.map(ann =>
+        ids.includes(ann.id)
+          ? { ...ann, isVisible: !(ann.isVisible ?? true), updatedAt: Date.now() }
+          : ann
+      )
+    )
+  }, [])
+
   // Label operations
   const addLabel = useCallback(async (label: Label) => {
     await labelStorage.add(label)
@@ -146,6 +160,7 @@ export function useStorage() {
     updateAnnotation,
     removeAnnotation,
     removeManyAnnotations,
+    bulkToggleAnnotationVisibility,
     addLabel,
     updateLabel,
     removeLabel,
