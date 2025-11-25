@@ -153,10 +153,5 @@ MIT License - see [LICENSE](LICENSE) file for details.
 <div align="center">
   <p><strong>Ready to speed up your CV pipeline?</strong></p>
   <p>© 2025 AnnotateANU. Built for the Computer Vision Community.</p>
-  <p>
-    <a href="https://github.com/agfianf/annotate-anu.git">GitHub</a> ·
-    <a href="https://annotateau.example.com">Website</a> ·
-    <a href="https://github.com/agfianf/annotate-anu.git/issues">Issues</a>
-  </p>
 </div>
 
