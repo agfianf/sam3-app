@@ -36,35 +36,24 @@
 
 ---
 
-## Why Choose AnnotateANU?
-
-### ⚡ AI-Powered Precision
-Don't waste hours clicking points. Our integration with SAM3 (Segment Anything Model 3) allows for automatic object detection via text prompts or simple bounding boxes. Get pixel-perfect masks in milliseconds.
-
-### 🔒 Privacy by Design
-We utilize IndexedDB for browser-based storage. Your dataset remains strictly local on your machine. We do not upload your images to any server, ensuring total data sovereignty and zero latency.
-
-### 🛠️ Flexible & Export Ready
-Whether you need Bounding Boxes or Polygon Segmentation, we support it. Export instantly to industry standards: COCO JSON, YOLO format, or ZIP archives with a single click.
-
 ## ✨ Features
 
-### ⚡ Automated Segmentation
+**⚡ Automated Segmentation**
 SAM3 inference runs locally or via optimized endpoints to auto-segment objects instantly. Use text prompts or bounding boxes to get pixel-perfect masks in milliseconds.
 
-### 🎯 Manual Precision
+**🎯 Manual Precision**
 Need to tweak the AI's work? Use our pixel-perfect pen, rectangle, and polygon tools for fine-tuning your annotations with complete control.
 
-### 📦 Batch Workflow
+**📦 Batch Workflow**
 Load hundreds of images at once. Our interface handles batch processing without browser lag, making large dataset annotation a breeze.
 
-### ⌨️ Lightning Shortcuts
+**⌨️ Lightning Shortcuts**
 Designed for power users. Keep your hands on the keyboard and annotate without breaking flow with comprehensive keyboard shortcuts.
 
-### 💾 Export Ready
+**💾 Export Ready**
 Export to COCO JSON, YOLO format, or ZIP archives with one click. Industry-standard formats ready for your ML pipelines.
 
-### 🔒 Local-First Storage
+**🔒 Local-First Storage**
 Your data stays local with IndexedDB - no server uploads, total privacy. All processing happens in your browser or on your local backend.
 
 ## Architecture
