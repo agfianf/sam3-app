@@ -14,7 +14,7 @@
   [![Privacy](https://img.shields.io/badge/Privacy-No%20Server%20Uploads-blue)](https://github.com/agfianf/annotate-anu.git)
   [![Powered by SAM3](https://img.shields.io/badge/Powered%20by-Meta%20SAM3-0467DF)](https://huggingface.co/facebook/sam3)
 
-  [Get Started](#quick-start) · [View Demo](https://annotateau.example.com) · [Report Bug](https://github.com/agfianf/annotate-anu.git/issues)
+  [Get Started](#quick-start) · [Report Bug](https://github.com/agfianf/annotate-anu/issues)
 
 </div>
 
