@@ -243,7 +243,7 @@ export function BboxPromptPanel({
                         <button
                           type="button"
                           onClick={() => handleDeleteBbox(bbox.id)}
-                          className="p-1 rounded hover:bg-red-600 transition-colors text-gray-700 hover:text-gray-900"
+                          className="p-1 rounded hover:bg-red-500 transition-colors text-gray-700 hover:text-white"
                           title="Delete"
                         >
                           <Trash2 className="w-3 h-3" />

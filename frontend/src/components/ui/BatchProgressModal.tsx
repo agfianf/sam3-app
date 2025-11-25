@@ -58,7 +58,7 @@ export function BatchProgressModal({
           <div className="flex items-center gap-2">
             <X className="w-4 h-4 text-red-500" />
             <span className="text-gray-800">
-              <span className="font-semibold text-red-600">{errorCount}</span> failed
+              <span className="font-semibold text-red-500">{errorCount}</span> failed
             </span>
           </div>
         </div>
@@ -102,7 +102,7 @@ export function BatchProgressModal({
                     </div>
                   )}
                   {item.status === 'error' && item.error && (
-                    <div className="text-xs text-red-600">{item.error}</div>
+                    <div className="text-xs text-red-500">{item.error}</div>
                   )}
                   {item.status === 'processing' && (
                     <div className="text-xs text-emerald-600">Processing...</div>

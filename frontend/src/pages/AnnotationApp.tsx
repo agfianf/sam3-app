@@ -1,4 +1,4 @@
-import { Copy, Download, Home, Loader2, RotateCcw, Trash2, Upload } from 'lucide-react'
+import { Copy, Download, Loader2, RotateCcw, Trash2, Upload } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
 import { Link } from 'react-router-dom'
@@ -72,7 +72,7 @@ const ImageThumbnail = ({
       )}
       <button
         onClick={onDelete}
-        className="absolute top-1 left-1 p-1 bg-red-600 hover:bg-red-700 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
+        className="absolute top-1 left-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded opacity-0 group-hover:opacity-100 transition-opacity"
         title="Delete image"
       >
         <Trash2 className="w-3 h-3" />
@@ -649,7 +649,7 @@ function AnnotationApp() {
           </button>
           <button
             onClick={() => setShowResetModal(true)}
-            className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors flex items-center gap-1.5"
+            className="px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm rounded transition-colors flex items-center gap-1.5"
             title="Reset all data (annotations and optionally images)"
           >
             <RotateCcw className="w-4 h-4" />
@@ -903,7 +903,7 @@ function AnnotationApp() {
                     <span className="flex-1 text-gray-900">{label.name}</span>
                     <button
                       onClick={() => removeLabel(label.id)}
-                      className="text-red-600 hover:text-red-700 text-sm"
+                      className="text-red-500 hover:text-red-600 text-sm"
                     >
                       Delete
                     </button>
@@ -1007,8 +1007,8 @@ function AnnotationApp() {
         maxWidth="md"
       >
         <div className="space-y-4">
-          <div className="bg-red-50/80 border border-red-300 rounded-lg p-4">
-            <p className="text-red-700 font-medium">⚠️ Warning: This action cannot be undone!</p>
+          <div className="bg-red-50/80 border border-red-200 rounded-lg p-4">
+            <p className="text-red-600 font-medium">⚠️ Warning: This action cannot be undone!</p>
           </div>
           <p className="text-gray-800">
             Are you sure you want to reset? This will permanently delete:
@@ -1017,7 +1017,7 @@ function AnnotationApp() {
             <li>All annotations</li>
             <li>All labels (will reset to defaults)</li>
             <li>Tool configuration</li>
-            {resetIncludeImages && <li className="text-red-700 font-medium">All loaded images</li>}
+            {resetIncludeImages && <li className="text-red-600 font-medium">All loaded images</li>}
           </ul>
           <label className="flex items-center gap-2 text-gray-800 cursor-pointer">
             <input
@@ -1046,7 +1046,7 @@ function AnnotationApp() {
                 setSelectedAnnotation(null)
                 setSelectedTool('select')
               }}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
             >
               Reset All
             </button>

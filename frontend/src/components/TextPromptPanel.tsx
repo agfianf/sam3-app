@@ -1,12 +1,12 @@
-import { useState, useEffect, useRef } from 'react'
-import { Loader2, Sparkles, X } from 'lucide-react'
-import { Button } from './ui/button'
-import { PromptModeSelector } from './ui/PromptModeSelector'
-import { ImageSelectorModal } from './ui/ImageSelectorModal'
-import { BatchProgressModal, type BatchProgressItem } from './ui/BatchProgressModal'
-import type { Label, ImageData, PromptMode } from '@/types/annotations'
 import { sam3Client } from '@/lib/sam3-client'
+import type { ImageData, Label, PromptMode } from '@/types/annotations'
+import { Loader2, Sparkles, X } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
+import { BatchProgressModal, type BatchProgressItem } from './ui/BatchProgressModal'
+import { Button } from './ui/button'
+import { ImageSelectorModal } from './ui/ImageSelectorModal'
+import { PromptModeSelector } from './ui/PromptModeSelector'
 
 interface TextPromptPanelProps {
   labels: Label[]
@@ -550,7 +550,7 @@ export function TextPromptPanel({
           type="button"
           onClick={handleActionButtonClick}
           disabled={isLoading || !textPrompt.trim() || !labelId || (promptMode === 'single' && !currentImage)}
-          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-white disabled:opacity-50"
+          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-white disabled:opacity-50 text-white"
         >
           {isLoading ? (
             <>

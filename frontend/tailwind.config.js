@@ -41,6 +41,7 @@ export default {
           DEFAULT: "hsl(var(--card))",
           foreground: "hsl(var(--card-foreground))",
         },
+        // Primary brand color - Emerald Green
         emerald: {
           DEFAULT: '#10b981',
           50: '#ecfdf5',
@@ -53,6 +54,48 @@ export default {
           700: '#047857',
           800: '#065f46',
           900: '#064e3b',
+        },
+        // Secondary/Accent color - Chartreuse
+        chartreuse: {
+          DEFAULT: '#9ABA12',
+          50: '#f7fce7',
+          100: '#eef9c3',
+          200: '#e0f48b',
+          300: '#ceea4a',
+          400: '#bada1a',
+          500: '#9ABA12',
+          600: '#7a950b',
+          700: '#5c710d',
+          800: '#4a5a10',
+          900: '#3f4c11',
+        },
+        // Hint/Dark accent - Forest Green
+        forest: {
+          DEFAULT: '#37520B',
+          50: '#f4f7ed',
+          100: '#e6eed6',
+          200: '#cfdfb2',
+          300: '#b1ca84',
+          400: '#93b35b',
+          500: '#749740',
+          600: '#587730',
+          700: '#455b27',
+          800: '#37520B',
+          900: '#2d4109',
+        },
+        // Soft red for delete/destructive actions
+        softred: {
+          DEFAULT: '#EF4444',
+          50: '#fef2f2',
+          100: '#fee2e2',
+          200: '#fecaca',
+          300: '#fca5a5',
+          400: '#f87171',
+          500: '#EF4444',
+          600: '#dc2626',
+          700: '#b91c1c',
+          800: '#991b1b',
+          900: '#7f1d1d',
         },
       },
       backdropBlur: {

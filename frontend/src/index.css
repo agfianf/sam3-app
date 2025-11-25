@@ -83,3 +83,17 @@ body {
     background: rgba(255, 255, 255, 0.98);
   }
 }
+
+/* Pointer cursor for all interactive elements */
+button,
+a,
+[role="button"],
+.cursor-pointer {
+  cursor: pointer;
+}
+
+/* Ensure disabled buttons don't show pointer */
+button:disabled,
+button[disabled] {
+  cursor: not-allowed;
+}
