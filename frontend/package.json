@@ -21,6 +21,7 @@
     "react-dom": "^19.2.0",
     "react-hot-toast": "^2.6.0",
     "react-konva": "^19.2.0",
+    "react-router-dom": "^6.28.0",
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
@@ -28,6 +29,7 @@
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
+    "@types/react-router-dom": "^5.3.3",
     "@vitejs/plugin-react": "^4.7.0",
     "autoprefixer": "^10.4.22",
     "eslint": "^9.39.1",

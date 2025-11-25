@@ -1,0 +1,83 @@
+import { Github } from 'lucide-react'
+
+function Footer() {
+  return (
+    <footer className="bg-gray-900 text-gray-400 py-12 px-4">
+      <div className="container mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 mb-8">
+          {/* Brand */}
+          <div>
+            <h3 className="text-white font-bold text-xl mb-4">AnnotateAnu</h3>
+            <p className="text-sm leading-relaxed">
+              Free, open-source annotation platform powered by SAM3 AI and built for speed.
+            </p>
+          </div>
+
+          {/* Links */}
+          <div>
+            <h4 className="text-white font-semibold mb-4">Resources</h4>
+            <ul className="space-y-2 text-sm">
+              <li>
+                <a
+                  href="https://github.com/yourusername/annotateau"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-emerald-400 transition-colors"
+                >
+                  GitHub Repository
+                </a>
+              </li>
+              <li>
+                <a href="#features" className="hover:text-emerald-400 transition-colors">
+                  Documentation
+                </a>
+              </li>
+              <li>
+                <a
+                  href="https://huggingface.co/facebook/sam3"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-emerald-400 transition-colors"
+                >
+                  SAM3 Model
+                </a>
+              </li>
+            </ul>
+          </div>
+
+          {/* Built With */}
+          <div>
+            <h4 className="text-white font-semibold mb-4">Built With</h4>
+            <ul className="space-y-2 text-sm">
+              <li>React + TypeScript</li>
+              <li>FastAPI + Python</li>
+              <li>SAM3 (Segment Anything Model 3)</li>
+              <li>Tailwind CSS</li>
+              <li>IndexedDB</li>
+            </ul>
+          </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div className="pt-8 border-t border-gray-800 flex flex-col md:flex-row justify-between items-center gap-4">
+          <p className="text-sm">
+            &copy; {new Date().getFullYear()} AnnotateAnu. Released under the MIT License.
+          </p>
+          <div className="flex items-center gap-4">
+            <a
+              href="https://github.com/yourusername/annotateau"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-emerald-400 transition-colors"
+              aria-label="GitHub"
+            >
+              <Github className="w-5 h-5" />
+            </a>
+          </div>
+        </div>
+      </div>
+    </footer>
+  )
+}
+
+export default Footer

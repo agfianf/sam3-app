@@ -31,16 +31,16 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
       }
 
       // Tool selection shortcuts
-      if (event.key === 'v' && config.onSelectTool) {
+      if (event.key === 'v' && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && config.onSelectTool) {
         event.preventDefault()
         config.onSelectTool('select')
-      } else if (event.key === 'r' && config.onSelectTool) {
+      } else if (event.key === 'r' && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && config.onSelectTool) {
         event.preventDefault()
         config.onSelectTool('rectangle')
-      } else if (event.key === 'p' && config.onSelectTool) {
+      } else if (event.key === 'p' && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && config.onSelectTool) {
         event.preventDefault()
         config.onSelectTool('polygon')
-      } else if (event.key === 'o' && config.onSelectTool) {
+      } else if (event.key === 'o' && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && config.onSelectTool) {
         event.preventDefault()
         config.onSelectTool('point')
       }
@@ -58,16 +58,16 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
       }
 
       // 'n' for new annotation (same type as previous)
-      else if (event.key === 'n' && config.onNewAnnotation) {
+      else if (event.key === 'n' && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && config.onNewAnnotation) {
         event.preventDefault()
         config.onNewAnnotation()
       }
 
       // Image navigation shortcuts
-      else if (event.key === 'f' && config.onNextImage) {
+      else if (event.key === 'f' && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && config.onNextImage) {
         event.preventDefault()
         config.onNextImage()
-      } else if (event.key === 'd' && config.onPreviousImage) {
+      } else if (event.key === 'd' && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && config.onPreviousImage) {
         event.preventDefault()
         config.onPreviousImage()
       }
@@ -100,7 +100,7 @@ export function useKeyboardShortcuts(config: KeyboardShortcutsConfig) {
       }
 
       // Show shortcuts help
-      else if (event.key === '?' && config.onShowShortcuts) {
+      else if (event.key === '?' && !event.ctrlKey && !event.metaKey && !event.shiftKey && !event.altKey && config.onShowShortcuts) {
         event.preventDefault()
         config.onShowShortcuts()
       }

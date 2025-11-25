@@ -375,14 +375,14 @@ export function TextPromptPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-2 flex-1">
           <Sparkles className="w-5 h-5 text-purple-500" />
-          <h2 className="text-lg font-semibold text-white">Text-Prompt</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Text-Prompt</h2>
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded hover:bg-gray-700 transition-colors text-gray-400 hover:text-white"
+          className="p-1 rounded hover:bg-white transition-colors text-gray-600 hover:text-gray-900"
           title="Close"
         >
           <X className="w-5 h-5" />
@@ -392,15 +392,15 @@ export function TextPromptPanel({
       {/* Content */}
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-6">
         {/* Description */}
-        <div className="bg-purple-900/20 border border-purple-700/50 rounded-lg p-3">
-          <p className="text-sm text-purple-200">
+        <div className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+          <p className="text-sm text-purple-700">
             Describe what objects you want to detect in natural language. The AI will automatically find and segment them.
           </p>
         </div>
 
         {/* Text Prompt Input */}
         <div>
-          <label htmlFor="textPrompt" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="textPrompt" className="block text-sm font-medium text-gray-700 mb-2">
             Text Prompt
           </label>
           <input
@@ -409,17 +409,17 @@ export function TextPromptPanel({
             value={textPrompt}
             onChange={(e) => setTextPrompt(e.target.value)}
             placeholder="e.g., truck plate, person, car"
-            className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             disabled={isLoading}
           />
-          <p className="mt-1 text-xs text-gray-400">
+          <p className="mt-1 text-xs text-gray-600">
             Describe the object(s) you want to detect
           </p>
         </div>
 
         {/* Label Selection */}
         <div>
-          <label htmlFor="labelSelect" className="block text-sm font-medium text-gray-300 mb-2">
+          <label htmlFor="labelSelect" className="block text-sm font-medium text-gray-700 mb-2">
             Assign Label
           </label>
           <div className="relative">
@@ -427,7 +427,7 @@ export function TextPromptPanel({
               id="labelSelect"
               value={labelId}
               onChange={(e) => setLabelId(e.target.value)}
-              className="w-full px-3 py-2 bg-gray-700 border border-gray-600 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none"
+              className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent appearance-none"
               disabled={isLoading}
             >
               <option value="">Select a label...</option>
@@ -444,14 +444,14 @@ export function TextPromptPanel({
               />
             )}
           </div>
-          <p className="mt-1 text-xs text-gray-400">
+          <p className="mt-1 text-xs text-gray-600">
             All detected objects will be tagged with this label
           </p>
         </div>
 
         {/* Annotation Type Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-3">
+          <label className="block text-sm font-medium text-gray-700 mb-3">
             Annotation Type
           </label>
           <div className="space-y-2">
@@ -466,8 +466,8 @@ export function TextPromptPanel({
                 disabled={isLoading}
               />
               <div>
-                <div className="text-white font-medium">Polygon / Mask</div>
-                <div className="text-sm text-gray-400">
+                <div className="text-gray-900 font-medium">Polygon / Mask</div>
+                <div className="text-sm text-gray-600">
                   Precise segmentation masks following object contours
                 </div>
               </div>
@@ -484,8 +484,8 @@ export function TextPromptPanel({
                 disabled={isLoading}
               />
               <div>
-                <div className="text-white font-medium">Bounding Box</div>
-                <div className="text-sm text-gray-400">
+                <div className="text-gray-900 font-medium">Bounding Box</div>
+                <div className="text-sm text-gray-600">
                   Rectangular boxes around detected objects
                 </div>
               </div>
@@ -503,7 +503,7 @@ export function TextPromptPanel({
         {/* Threshold Settings */}
         <div className="space-y-4">
           <div>
-            <label htmlFor="threshold" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="threshold" className="block text-sm font-medium text-gray-700 mb-2">
               Detection Threshold: {threshold.toFixed(2)}
             </label>
             <input
@@ -514,16 +514,16 @@ export function TextPromptPanel({
               step="0.05"
               value={threshold}
               onChange={(e) => setThreshold(parseFloat(e.target.value))}
-              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
+              className="w-full h-2 bg-white rounded-lg appearance-none cursor-pointer accent-purple-600"
               disabled={isLoading}
             />
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-gray-600">
               Higher values = more confident detections (fewer results)
             </p>
           </div>
 
           <div>
-            <label htmlFor="maskThreshold" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="maskThreshold" className="block text-sm font-medium text-gray-700 mb-2">
               Mask Threshold: {maskThreshold.toFixed(2)}
             </label>
             <input
@@ -534,10 +534,10 @@ export function TextPromptPanel({
               step="0.05"
               value={maskThreshold}
               onChange={(e) => setMaskThreshold(parseFloat(e.target.value))}
-              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-purple-600"
+              className="w-full h-2 bg-white rounded-lg appearance-none cursor-pointer accent-purple-600"
               disabled={isLoading}
             />
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-gray-600">
               Controls segmentation mask precision
             </p>
           </div>
@@ -545,12 +545,12 @@ export function TextPromptPanel({
       </form>
 
       {/* Actions */}
-      <div className="px-4 py-3 border-t border-gray-700">
+      <div className="px-4 py-3 border-t border-gray-200">
         <Button
           type="button"
           onClick={handleActionButtonClick}
           disabled={isLoading || !textPrompt.trim() || !labelId || (promptMode === 'single' && !currentImage)}
-          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:opacity-50"
+          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-white disabled:opacity-50"
         >
           {isLoading ? (
             <>

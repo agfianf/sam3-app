@@ -148,9 +148,9 @@ export function LeftSidebar({
   }
 
   return (
-    <div className="flex border-r border-gray-700">
+    <div className="flex border-r border-gray-200">
       {/* Icon Bar */}
-      <div className="w-16 bg-gray-800 flex flex-col items-center py-4 gap-2 border-r border-gray-700">
+      <div className="w-16 glass flex flex-col items-center py-4 gap-2 border-r border-gray-200">
         {/* Manual Annotation Tools */}
         <ToolButton
           icon={<MousePointer className="w-5 h-5" />}
@@ -159,7 +159,7 @@ export function LeftSidebar({
           shortcut="V"
           onClick={() => onToolChange('select')}
           isActive={selectedTool === 'select'}
-          activeColor="orange"
+          activeColor="emerald"
         />
 
         <ToolButton
@@ -169,7 +169,7 @@ export function LeftSidebar({
           shortcut="R"
           onClick={() => onToolChange('rectangle')}
           isActive={selectedTool === 'rectangle'}
-          activeColor="orange"
+          activeColor="emerald"
           showLabelSelector={true}
           labels={labels}
           selectedLabelId={selectedLabelId}
@@ -183,7 +183,7 @@ export function LeftSidebar({
           shortcut="P"
           onClick={() => onToolChange('polygon')}
           isActive={selectedTool === 'polygon'}
-          activeColor="orange"
+          activeColor="emerald"
           showLabelSelector={true}
           labels={labels}
           selectedLabelId={selectedLabelId}
@@ -191,7 +191,7 @@ export function LeftSidebar({
           disabled={activeTool === 'bbox-prompt'}
         />
 
-        <div className="w-full h-px bg-gray-700 my-2" />
+        <div className="w-full h-px bg-gray-300 my-2" />
 
         {/* AI-Powered Tools */}
         <ToolButton
@@ -215,7 +215,7 @@ export function LeftSidebar({
         {/* Spacer to push controls to bottom */}
         <div className="flex-1" />
 
-        <div className="w-full h-px bg-gray-700 my-2" />
+        <div className="w-full h-px bg-gray-300 my-2" />
 
         {/* View Controls */}
         <ToolButton
@@ -264,7 +264,7 @@ export function LeftSidebar({
           disabled={!canRedo || !onRedo}
         />
 
-        <div className="w-full h-px bg-gray-700 my-2" />
+        <div className="w-full h-px bg-gray-300 my-2" />
 
         {/* Help */}
         <ToolButton
@@ -279,7 +279,7 @@ export function LeftSidebar({
 
       {/* Panel Area */}
       {activeTool && (
-        <div className="w-80 bg-gray-800 overflow-y-auto">
+        <div className="w-80 glass-strong overflow-y-auto">
           {activeTool === 'text-prompt' && (
             <TextPromptPanel
               labels={labels}

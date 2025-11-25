@@ -65,3 +65,5 @@ htmlcov/
 # Temporary files
 *.tmp
 *.temp
+.claude
+backend/docs

@@ -30,39 +30,44 @@ export function AIModeIndicator({ mode, isActive, textPrompt = '', isProcessing 
     return ''
   }
 
-  const isAutoApply = mode === 'auto-apply'
-
   return (
-    <div className="flex items-center gap-2 px-2 py-1 bg-orange-600/20 border border-orange-600/50 rounded">
+    <div className="relative flex items-center gap-2 px-2 py-1 bg-emerald-600/20 border border-emerald-600/50 rounded pulse-container">
       {isProcessing ? (
-        <Loader2 className="w-3 h-3 text-orange-500 animate-spin" />
+        <Loader2 className="w-3 h-3 text-emerald-600 animate-spin" />
       ) : (
-        <Activity
-          className={`w-3 h-3 text-orange-500 ${isAutoApply ? 'animate-pulse' : ''}`}
-          style={isAutoApply ? { animation: 'heartbeat 1.5s ease-in-out infinite' } : undefined}
-        />
+        <Activity className="w-3 h-3 text-emerald-600" />
       )}
-      <span className="text-xs font-medium text-orange-400">
+      <span className="text-xs font-medium text-emerald-700">
         AI: {getModeLabel()}
-        {textPrompt && <span className="text-orange-300"> | "{textPrompt}"</span>}
-        {getStatusLabel() && <span className="text-orange-300"> | {getStatusLabel()}</span>}
+        {textPrompt && <span className="text-emerald-600"> | "{textPrompt}"</span>}
+        {getStatusLabel() && <span className="text-emerald-600"> | {getStatusLabel()}</span>}
       </span>
       <style jsx>{`
-        @keyframes heartbeat {
-          0%, 100% {
+        .pulse-container::before {
+          content: '';
+          position: absolute;
+          top: -1px;
+          left: -1px;
+          right: -1px;
+          bottom: -1px;
+          border-radius: 0.25rem;
+          border: 1px solid rgba(16, 185, 129, 0.4);
+          animation: pulse-ripple 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+          pointer-events: none;
+        }
+
+        @keyframes pulse-ripple {
+          0% {
             transform: scale(1);
+            opacity: 0.6;
           }
-          10% {
-            transform: scale(1.2);
+          50% {
+            transform: scale(1.08);
+            opacity: 0.3;
           }
-          20% {
-            transform: scale(1);
-          }
-          30% {
-            transform: scale(1.2);
-          }
-          40% {
-            transform: scale(1);
+          100% {
+            transform: scale(1.15);
+            opacity: 0;
           }
         }
       `}</style>

@@ -171,14 +171,14 @@ export function BboxPromptPanel({
   return (
     <div className="flex flex-col h-full">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-700 flex items-center justify-between">
+      <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Square className="w-5 h-5 text-blue-500" />
-          <h2 className="text-lg font-semibold text-white">Bbox-Prompt</h2>
+          <h2 className="text-lg font-semibold text-gray-900">Bbox-Prompt</h2>
         </div>
         <button
           onClick={onClose}
-          className="p-1 rounded hover:bg-gray-700 transition-colors text-gray-400 hover:text-white"
+          className="p-1 rounded hover:bg-white transition-colors text-gray-600 hover:text-gray-900"
           title="Close"
         >
           <X className="w-5 h-5" />
@@ -188,16 +188,16 @@ export function BboxPromptPanel({
       {/* Content */}
       <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 space-y-6">
         {/* Description */}
-        <div className="bg-blue-900/20 border border-blue-700/50 rounded-lg p-3">
-          <p className="text-sm text-blue-200">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+          <p className="text-sm text-blue-700">
             Draw bounding boxes around objects on the canvas, then run inference to automatically segment them.
           </p>
         </div>
 
         {/* Instructions */}
-        <div className="bg-gray-700/50 rounded-lg p-3 space-y-2">
-          <p className="text-sm font-medium text-white">How to use:</p>
-          <ol className="text-xs text-gray-300 space-y-1 list-decimal list-inside">
+        <div className="bg-white/50 rounded-lg p-3 space-y-2">
+          <p className="text-sm font-medium text-gray-900">How to use:</p>
+          <ol className="text-xs text-gray-700 space-y-1 list-decimal list-inside">
             <li>Use the Rectangle tool to draw bounding boxes</li>
             <li>Select a label for the annotations</li>
             <li>Adjust thresholds if needed</li>
@@ -208,7 +208,7 @@ export function BboxPromptPanel({
         {/* Drawn Bboxes List */}
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-300">
+            <label className="block text-sm font-medium text-gray-700">
               Drawn Bounding Boxes ({promptBboxes.length})
             </label>
             {promptBboxes.length > 0 && (
@@ -221,9 +221,9 @@ export function BboxPromptPanel({
               </button>
             )}
           </div>
-          <div className="bg-gray-700 rounded-lg max-h-40 overflow-y-auto">
+          <div className="bg-white rounded-lg max-h-40 overflow-y-auto">
             {promptBboxes.length === 0 ? (
-              <div className="p-4 text-center text-sm text-gray-400">
+              <div className="p-4 text-center text-sm text-gray-600">
                 No bounding boxes drawn yet. Use the Rectangle tool on the canvas.
               </div>
             ) : (
@@ -237,13 +237,13 @@ export function BboxPromptPanel({
                     >
                       {/* Bbox info and delete button */}
                       <div className="flex items-center justify-between">
-                        <span className="text-white font-mono text-xs">
+                        <span className="text-gray-900 font-mono text-xs">
                           Box {index + 1}: ({Math.round(bbox.x)}, {Math.round(bbox.y)}) - {Math.round(bbox.width)}×{Math.round(bbox.height)}
                         </span>
                         <button
                           type="button"
                           onClick={() => handleDeleteBbox(bbox.id)}
-                          className="p-1 rounded hover:bg-red-600 transition-colors text-gray-300 hover:text-white"
+                          className="p-1 rounded hover:bg-red-600 transition-colors text-gray-700 hover:text-gray-900"
                           title="Delete"
                         >
                           <Trash2 className="w-3 h-3" />
@@ -254,7 +254,7 @@ export function BboxPromptPanel({
                         <select
                           value={bbox.labelId}
                           onChange={(e) => handleBboxLabelChange(bbox.id, e.target.value)}
-                          className="w-full px-2 py-1 bg-gray-700 border border-gray-600 rounded text-white text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 appearance-none pr-8"
+                          className="w-full px-2 py-1 bg-white border border-gray-300 rounded text-gray-900 text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 appearance-none pr-8"
                         >
                           <option value="">Select label...</option>
                           {labels.map((label) => (
@@ -280,7 +280,7 @@ export function BboxPromptPanel({
 
         {/* Annotation Type Selection */}
         <div>
-          <label className="block text-sm font-medium text-gray-300 mb-3">
+          <label className="block text-sm font-medium text-gray-700 mb-3">
             Annotation Type
           </label>
           <div className="space-y-2">
@@ -295,8 +295,8 @@ export function BboxPromptPanel({
                 disabled={isLoading}
               />
               <div>
-                <div className="text-white font-medium">Polygon / Mask</div>
-                <div className="text-sm text-gray-400">
+                <div className="text-gray-900 font-medium">Polygon / Mask</div>
+                <div className="text-sm text-gray-600">
                   Precise segmentation masks following object contours
                 </div>
               </div>
@@ -313,8 +313,8 @@ export function BboxPromptPanel({
                 disabled={isLoading}
               />
               <div>
-                <div className="text-white font-medium">Bounding Box</div>
-                <div className="text-sm text-gray-400">
+                <div className="text-gray-900 font-medium">Bounding Box</div>
+                <div className="text-sm text-gray-600">
                   Rectangular boxes around detected objects
                 </div>
               </div>
@@ -334,7 +334,7 @@ export function BboxPromptPanel({
         {/* Threshold Settings */}
         <div className="space-y-4">
           <div>
-            <label htmlFor="threshold" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="threshold" className="block text-sm font-medium text-gray-700 mb-2">
               Detection Threshold: {threshold.toFixed(2)}
             </label>
             <input
@@ -345,16 +345,16 @@ export function BboxPromptPanel({
               step="0.05"
               value={threshold}
               onChange={(e) => setThreshold(parseFloat(e.target.value))}
-              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              className="w-full h-2 bg-white rounded-lg appearance-none cursor-pointer accent-blue-600"
               disabled={isLoading}
             />
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-gray-600">
               Higher values = more confident detections (fewer results)
             </p>
           </div>
 
           <div>
-            <label htmlFor="maskThreshold" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="maskThreshold" className="block text-sm font-medium text-gray-700 mb-2">
               Mask Threshold: {maskThreshold.toFixed(2)}
             </label>
             <input
@@ -365,10 +365,10 @@ export function BboxPromptPanel({
               step="0.05"
               value={maskThreshold}
               onChange={(e) => setMaskThreshold(parseFloat(e.target.value))}
-              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              className="w-full h-2 bg-white rounded-lg appearance-none cursor-pointer accent-blue-600"
               disabled={isLoading}
             />
-            <p className="mt-1 text-xs text-gray-400">
+            <p className="mt-1 text-xs text-gray-600">
               Controls segmentation mask precision
             </p>
           </div>
@@ -376,12 +376,12 @@ export function BboxPromptPanel({
       </form>
 
       {/* Actions */}
-      <div className="px-4 py-3 border-t border-gray-700">
+      <div className="px-4 py-3 border-t border-gray-200">
         <Button
           type="button"
           onClick={handleSubmit}
           disabled={isLoading || promptBboxes.length === 0 || !currentImage || promptBboxes.some(bbox => !bbox.labelId)}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-700 disabled:opacity-50"
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-white disabled:opacity-50"
         >
           {isLoading ? (
             <>

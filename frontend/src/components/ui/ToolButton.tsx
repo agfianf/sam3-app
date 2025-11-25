@@ -11,7 +11,7 @@ interface ToolButtonProps {
   shortcut?: string;
   onClick: () => void;
   isActive?: boolean;
-  activeColor?: 'orange' | 'purple' | 'blue';
+  activeColor?: 'orange' | 'purple' | 'blue' | 'emerald';
   disabled?: boolean;
   showLabelSelector?: boolean;
   labels?: Label[];
@@ -45,6 +45,7 @@ export function ToolButton({
     orange: 'bg-orange-500 text-white',
     purple: 'bg-purple-500 text-white',
     blue: 'bg-blue-500 text-white',
+    emerald: 'bg-emerald-500 text-white',
   };
 
   const selectedLabel = labels.find((l) => l.id === selectedLabelId);
@@ -99,10 +100,10 @@ export function ToolButton({
         className={cn(
           'w-10 h-10 flex items-center justify-center rounded transition-colors relative',
           disabled
-            ? 'text-gray-600 cursor-not-allowed opacity-50'
+            ? 'text-gray-400 cursor-not-allowed opacity-50'
             : isActive
             ? activeColorClasses[activeColor]
-            : 'text-gray-400 hover:text-white hover:bg-gray-700',
+            : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100',
           className
         )}
         aria-label={tooltipTitle}

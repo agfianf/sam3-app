@@ -1,20 +1,21 @@
-import { Copy, Download, Loader2, RotateCcw, Trash2, Upload } from 'lucide-react'
+import { Copy, Download, Home, Loader2, RotateCcw, Trash2, Upload } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import toast, { Toaster } from 'react-hot-toast'
-import './App.css'
-import Canvas from './components/Canvas'
-import { ExportModal } from './components/ExportModal'
-import { LeftSidebar } from './components/LeftSidebar'
-import Sidebar from './components/Sidebar'
-import { AIModeIndicator } from './components/ui/AIModeIndicator'
-import { Modal } from './components/ui/Modal'
-import ShortcutsHelpModal from './components/ui/ShortcutsHelpModal'
-import { useHistory } from './hooks/useHistory'
-import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
-import { useStorage } from './hooks/useStorage'
-import { DEFAULT_LABEL_COLOR, PRESET_COLORS } from './lib/colors'
-import { annotationStorage } from './lib/storage'
-import type { Annotation, ImageData, PolygonAnnotation, PromptMode, RectangleAnnotation, Tool } from './types/annotations'
+import { Link } from 'react-router-dom'
+import '../App.css'
+import Canvas from '../components/Canvas'
+import { ExportModal } from '../components/ExportModal'
+import { LeftSidebar } from '../components/LeftSidebar'
+import Sidebar from '../components/Sidebar'
+import { AIModeIndicator } from '../components/ui/AIModeIndicator'
+import { Modal } from '../components/ui/Modal'
+import ShortcutsHelpModal from '../components/ui/ShortcutsHelpModal'
+import { useHistory } from '../hooks/useHistory'
+import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
+import { useStorage } from '../hooks/useStorage'
+import { DEFAULT_LABEL_COLOR, PRESET_COLORS } from '../lib/colors'
+import { annotationStorage } from '../lib/storage'
+import type { Annotation, ImageData, PolygonAnnotation, PromptMode, RectangleAnnotation, Tool } from '../types/annotations'
 
 // Thumbnail component to prevent re-creating blob URLs on every render
 interface ImageThumbnailProps {
@@ -55,7 +56,7 @@ const ImageThumbnail = ({
       onClick={onClick}
       className={`group relative flex-shrink-0 cursor-pointer rounded overflow-hidden border-2 transition-all ${
         isActive
-          ? 'border-orange-500 ring-2 ring-orange-500/50'
+          ? 'border-emerald-500 ring-2 ring-emerald-500/50'
           : 'border-gray-600 hover:border-gray-500'
       }`}
     >
@@ -65,7 +66,7 @@ const ImageThumbnail = ({
         className="h-20 w-auto object-contain bg-gray-900"
       />
       {annotationCount > 0 && (
-        <div className="absolute top-1 right-1 bg-orange-600 text-white text-xs px-1.5 py-0.5 rounded">
+        <div className="absolute top-1 right-1 bg-emerald-600 text-white text-xs px-1.5 py-0.5 rounded">
           {annotationCount}
         </div>
       )}
@@ -80,7 +81,7 @@ const ImageThumbnail = ({
   )
 }
 
-function App() {
+function AnnotationApp() {
   const [selectedTool, setSelectedTool] = useState<Tool>('select')
   const [selectedAnnotation, setSelectedAnnotation] = useState<string | null>(null)
   const [selectedLabelId, setSelectedLabelId] = useState<string | null>(null)
@@ -613,20 +614,29 @@ function App() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-gray-900">
+    <div className="h-screen flex flex-col bg-gray-50">
       {/* Header */}
-      <header className="bg-gray-800 border-b border-gray-700 px-4 py-3 flex items-center justify-between">
-        <h1 className="text-xl font-semibold text-white">Annotator ANU</h1>
+      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Link
+            to="/"
+            className="p-2 hover:bg-emerald-50 rounded-lg transition-colors text-gray-600 hover:text-emerald-600"
+            title="Return to home"
+          >
+            <Home className="w-5 h-5" />
+          </Link>
+          <h1 className="text-xl font-semibold text-gray-900">AnnotateAnu</h1>
+        </div>
         <div className="flex items-center gap-3">
           {images.length > 0 && (
-            <span className="text-gray-400 text-sm">
+            <span className="text-gray-600 text-sm">
               Image {currentImageNumber} of {images.length} • {currentAnnotations.length} annotations
             </span>
           )}
           <button
             onClick={() => setShowExportModal(true)}
             disabled={annotations.length === 0}
-            className="px-3 py-1.5 bg-green-600 hover:bg-green-700 disabled:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded transition-colors flex items-center gap-1.5"
+            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded transition-colors flex items-center gap-1.5"
             title="Export annotations to COCO JSON or YOLO format"
           >
             <Download className="w-4 h-4" />
@@ -642,7 +652,7 @@ function App() {
           </button>
           <button
             onClick={() => setShowLabelManager(true)}
-            className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white text-sm rounded transition-colors"
+            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm rounded transition-colors"
             title="Create, edit, and delete labels"
           >
             Manage Labels
@@ -683,26 +693,26 @@ function App() {
           />
 
           {/* Canvas */}
-          <div className="flex-1 bg-gray-950 overflow-hidden flex flex-col">
+          <div className="flex-1 bg-white overflow-hidden flex flex-col border-x border-gray-200">
             {/* Image Viewer Header */}
             {currentImage && (
-              <div className="bg-gray-800/50 border-b border-gray-700 px-4 py-2 flex items-center justify-between">
+              <div className="glass border-b border-gray-200 px-4 py-2 flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <span className="text-orange-500 font-semibold">
+                  <span className="text-emerald-600 font-semibold">
                     {currentImageNumber} / {images.length}
                   </span>
                   <span className="text-gray-400 text-sm">|</span>
-                  <span className="text-white text-sm font-mono">{currentImage.name}</span>
+                  <span className="text-gray-900 text-sm font-mono">{currentImage.name}</span>
                   <button
                     onClick={copyFilenameToClipboard}
-                    className="p-1 hover:bg-gray-700 rounded transition-colors text-gray-400 hover:text-white"
+                    className="p-1 hover:bg-gray-100 rounded transition-colors text-gray-600 hover:text-gray-900"
                     title="Copy filename to clipboard"
                   >
                     <Copy className="w-4 h-4" />
                   </button>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  <div className="text-gray-400 text-xs">
+                  <div className="text-gray-600 text-xs">
                     {currentImage.width} × {currentImage.height} px
                   </div>
                   <AIModeIndicator
@@ -734,10 +744,10 @@ function App() {
               />
               {/* Auto-apply loading overlay */}
               {isAutoApplyLoading && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center pointer-events-none">
-                  <div className="bg-gray-800 px-6 py-4 rounded-lg shadow-xl flex items-center gap-3">
-                    <Loader2 className="w-5 h-5 text-orange-500 animate-spin" />
-                    <span className="text-white font-medium">Auto-detecting objects...</span>
+                <div className="absolute inset-0 bg-black/30 flex items-center justify-center pointer-events-none">
+                  <div className="glass-strong px-6 py-4 rounded-lg shadow-xl flex items-center gap-3">
+                    <Loader2 className="w-5 h-5 text-emerald-600 animate-spin" />
+                    <span className="text-gray-900 font-medium">Auto-detecting objects...</span>
                   </div>
                 </div>
               )}
@@ -763,7 +773,7 @@ function App() {
         </div>
 
         {/* Image Gallery - Bottom strip */}
-        <div className="h-28 bg-gray-800 border-t border-gray-700 flex items-center px-4 gap-3">
+        <div className="h-28 glass border-t border-gray-200 flex items-center px-4 gap-3">
           {/* Previous button */}
           <button
             onClick={() => {
@@ -773,7 +783,7 @@ function App() {
               }
             }}
             disabled={currentImageIndex <= 0 || images.length === 0}
-            className="p-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
+            className="p-2 bg-white hover:bg-gray-100 disabled:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 rounded transition-colors border border-gray-300"
             title="Previous image (D)"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -785,9 +795,9 @@ function App() {
           <div className="flex-1 flex gap-2 overflow-x-auto py-2">
             {/* Upload placeholder button */}
             <label className="flex-shrink-0 cursor-pointer group" title="Upload images to annotate">
-              <div className="h-20 w-20 border-2 border-dashed border-gray-600 hover:border-orange-500 rounded flex flex-col items-center justify-center gap-1 transition-colors bg-gray-900/50 hover:bg-gray-900">
-                <Upload className="w-6 h-6 text-gray-400 group-hover:text-orange-500 transition-colors" />
-                <span className="text-xs text-gray-500 group-hover:text-orange-500 transition-colors">Add</span>
+              <div className="h-20 w-20 border-2 border-dashed border-gray-300 hover:border-emerald-500 rounded flex flex-col items-center justify-center gap-1 transition-colors bg-white hover:bg-emerald-50">
+                <Upload className="w-6 h-6 text-gray-400 group-hover:text-emerald-600 transition-colors" />
+                <span className="text-xs text-gray-500 group-hover:text-emerald-600 transition-colors">Add</span>
               </div>
               <input
                 type="file"
@@ -833,7 +843,7 @@ function App() {
                 }
               }}
               disabled={currentImageIndex >= images.length - 1 || images.length === 0}
-              className="p-2 bg-gray-700 hover:bg-gray-600 disabled:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded transition-colors"
+              className="p-2 bg-white hover:bg-gray-100 disabled:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-gray-900 rounded transition-colors border border-gray-300"
               title="Next image (F)"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1076,4 +1086,4 @@ function App() {
   )
 }
 
-export default App
+export default AnnotationApp

@@ -203,11 +203,11 @@ export default function Sidebar({
   // Collapsed view - thin icon bar
   if (isCollapsed) {
     return (
-      <div className="w-12 bg-gray-800 border-l border-gray-700 flex flex-col items-center py-3 gap-3 transition-all duration-300">
+      <div className="w-12 glass border-l border-gray-200 flex flex-col items-center py-3 gap-3 transition-all duration-300">
         {/* Expand Button */}
         <button
           onClick={onToggleCollapse}
-          className="p-2 hover:bg-gray-700 rounded transition-colors text-gray-400 hover:text-white"
+          className="p-2 hover:bg-gray-100 rounded transition-colors text-gray-600 hover:text-gray-900"
           title="Expand Sidebar (Ctrl+B)"
         >
           <ChevronLeft className="w-5 h-5" />
@@ -215,16 +215,16 @@ export default function Sidebar({
 
         {/* Annotations Icon with Count Badge */}
         <div className="relative">
-          <Shapes className="w-5 h-5 text-gray-400" />
+          <Shapes className="w-5 h-5 text-gray-600" />
           {annotations.length > 0 && (
-            <div className="absolute -top-1 -right-1 w-4 h-4 bg-orange-500 text-white text-[10px] rounded-full flex items-center justify-center font-medium">
+            <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 text-gray-900 text-[10px] rounded-full flex items-center justify-center font-medium">
               {annotations.length > 9 ? '9+' : annotations.length}
             </div>
           )}
         </div>
 
         {/* Label Groups Count */}
-        <div className="text-xs text-gray-400 font-medium">
+        <div className="text-xs text-gray-600 font-medium">
           {labels.length}
         </div>
       </div>
@@ -233,22 +233,22 @@ export default function Sidebar({
 
   // Expanded view - full sidebar
   return (
-    <div className="w-80 bg-gray-800 border-l border-gray-700 flex flex-col transition-all duration-300">
+    <div className="w-80 glass-strong border-l border-gray-200 flex flex-col transition-all duration-300">
       {/* Header */}
-      <div className="px-4 py-3 border-b border-gray-700">
+      <div className="px-4 py-3 border-b border-gray-200">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <Shapes className="w-5 h-5" />
             Annotations
           </h2>
           <div className="flex items-center gap-2">
-            <div className="text-sm text-gray-400">
+            <div className="text-sm text-gray-600">
               {annotations.length} total
               {autoAnnotationsCount > 0 && ` • ${autoAnnotationsCount} auto`}
             </div>
             <button
               onClick={onToggleCollapse}
-              className="p-1 hover:bg-gray-700 rounded transition-colors text-gray-400 hover:text-white"
+              className="p-1 hover:bg-gray-100 rounded transition-colors text-gray-600 hover:text-gray-900"
               title="Collapse Sidebar (Ctrl+B)"
             >
               <ChevronRight className="w-4 h-4" />
@@ -259,10 +259,10 @@ export default function Sidebar({
 
       {/* Filter and Sort Controls */}
       {annotations.length > 0 && (
-        <div className="px-4 py-3 border-b border-gray-700 space-y-3">
+        <div className="px-4 py-3 border-b border-gray-200 space-y-3">
           {/* Filter */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <Filter className="w-4 h-4" />
               Filter
             </label>
@@ -271,8 +271,8 @@ export default function Sidebar({
                 onClick={() => setFilterMode('all')}
                 className={`flex-1 px-2 py-1 text-xs rounded transition-colors ${
                   filterMode === 'all'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-700 text-gray-400 hover:bg-gray-650'
+                    ? 'bg-purple-600 text-gray-900'
+                    : 'bg-white text-gray-600 hover:bg-gray-650'
                 }`}
                 title="Show all annotations"
               >
@@ -282,8 +282,8 @@ export default function Sidebar({
                 onClick={() => setFilterMode('manual')}
                 className={`flex-1 px-2 py-1 text-xs rounded transition-colors ${
                   filterMode === 'manual'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-700 text-gray-400 hover:bg-gray-650'
+                    ? 'bg-purple-600 text-gray-900'
+                    : 'bg-white text-gray-600 hover:bg-gray-650'
                 }`}
                 title="Show only manual annotations"
               >
@@ -293,8 +293,8 @@ export default function Sidebar({
                 onClick={() => setFilterMode('auto')}
                 className={`flex-1 px-2 py-1 text-xs rounded transition-colors flex items-center justify-center gap-1 ${
                   filterMode === 'auto'
-                    ? 'bg-purple-600 text-white'
-                    : 'bg-gray-700 text-gray-400 hover:bg-gray-650'
+                    ? 'bg-purple-600 text-gray-900'
+                    : 'bg-white text-gray-600 hover:bg-gray-650'
                 }`}
                 title="Show only AI-generated annotations"
               >
@@ -306,14 +306,14 @@ export default function Sidebar({
 
           {/* Sort */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-gray-300 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-gray-700 mb-2">
               <SortDesc className="w-4 h-4" />
               Sort
             </label>
             <select
               value={sortMode}
               onChange={(e) => setSortMode(e.target.value as SortMode)}
-              className="w-full px-3 py-1.5 bg-gray-700 text-white text-xs rounded border border-gray-600 focus:border-orange-500 focus:outline-none"
+              className="w-full px-3 py-1.5 bg-white text-gray-900 text-xs rounded border border-gray-300 focus:border-emerald-500 focus:outline-none"
               title="Sort annotations by different criteria"
             >
               <option value="newest">Newest First</option>
@@ -327,7 +327,7 @@ export default function Sidebar({
             {autoAnnotationsCount > 0 && (
               <button
                 onClick={() => setShowThresholdModal(true)}
-                className="flex-1 px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-xs rounded transition-colors flex items-center justify-center gap-1.5"
+                className="flex-1 px-3 py-1.5 bg-white hover:bg-gray-200 text-gray-900 text-xs rounded transition-colors flex items-center justify-center gap-1.5"
                 title="Remove AI annotations below confidence threshold"
               >
                 <Sparkles className="w-3 h-3" />
@@ -336,7 +336,7 @@ export default function Sidebar({
             )}
             <button
               onClick={() => setShowDeleteAllConfirm(true)}
-              className="flex-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-xs rounded transition-colors flex items-center justify-center gap-1.5"
+              className="flex-1 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-gray-900 text-xs rounded transition-colors flex items-center justify-center gap-1.5"
               title="Delete all annotations for this image"
             >
               <Trash2 className="w-3 h-3" />
@@ -348,8 +348,8 @@ export default function Sidebar({
 
       {/* Bulk Actions Panel */}
       {selectedIds.size > 0 && (
-        <div className="px-4 py-3 bg-gray-750 border-b border-gray-700 space-y-2">
-          <div className="text-sm text-gray-300 font-medium">
+        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200 space-y-2">
+          <div className="text-sm text-gray-700 font-medium">
             {selectedIds.size} selected
           </div>
 
@@ -358,7 +358,7 @@ export default function Sidebar({
             <select
               value={bulkChangeLabelId}
               onChange={(e) => setBulkChangeLabelId(e.target.value)}
-              className="flex-1 px-3 py-1.5 bg-gray-700 text-white text-sm rounded border border-gray-600 focus:border-orange-500 focus:outline-none"
+              className="flex-1 px-3 py-1.5 bg-white text-gray-900 text-sm rounded border border-gray-300 focus:border-emerald-500 focus:outline-none"
               title="Select new label for selected annotations"
             >
               <option value="">Change label...</option>
@@ -371,7 +371,7 @@ export default function Sidebar({
             <button
               onClick={handleBulkLabelChange}
               disabled={!bulkChangeLabelId}
-              className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white text-sm rounded transition-colors"
+              className="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-gray-900 text-sm rounded transition-colors"
               title="Apply label change to selected annotations"
             >
               Apply
@@ -381,7 +381,7 @@ export default function Sidebar({
           {/* Bulk Delete */}
           <button
             onClick={handleBulkDelete}
-            className="w-full px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors flex items-center justify-center gap-2"
+            className="w-full px-3 py-1.5 bg-red-600 hover:bg-red-700 text-gray-900 text-sm rounded transition-colors flex items-center justify-center gap-2"
             title="Delete all selected annotations (Del)"
           >
             <Trash2 className="w-4 h-4" />
@@ -391,7 +391,7 @@ export default function Sidebar({
           {/* Clear Selection */}
           <button
             onClick={() => setSelectedIds(new Set())}
-            className="w-full px-3 py-1.5 bg-gray-700 hover:bg-gray-600 text-white text-sm rounded transition-colors"
+            className="w-full px-3 py-1.5 bg-white hover:bg-gray-200 text-gray-900 text-sm rounded transition-colors"
             title="Deselect all annotations"
           >
             Clear Selection
@@ -402,7 +402,7 @@ export default function Sidebar({
       {/* Annotations grouped by label */}
       <div className="flex-1 overflow-y-auto">
         {labels.length === 0 ? (
-          <div className="p-8 text-center text-gray-400">
+          <div className="p-8 text-center text-gray-600">
             <p className="mb-2">No labels available</p>
             <p className="text-sm">Create labels to start annotating</p>
           </div>
@@ -419,23 +419,23 @@ export default function Sidebar({
               const allHidden = labelAnnotations.length > 0 && labelAnnotations.every(a => !(a.isVisible ?? true))
 
               return (
-                <div key={label.id} className="border-b border-gray-700">
+                <div key={label.id} className="border-b border-gray-200">
                   {/* Label Header */}
                   <div className={`px-3 py-2 transition-colors flex items-center gap-2 ${
                     selectedLabelId === label.id
-                      ? 'bg-orange-500/20 border-l-4 border-orange-500'
-                      : 'bg-gray-750 hover:bg-gray-700/50'
+                      ? 'bg-emerald-500/20 border-l-4 border-emerald-500'
+                      : 'bg-gray-50 hover:bg-gray-100/50'
                   }`}>
                     {/* Active Label Indicator (Radio Button) */}
                     {selectedLabelId === label.id && (
                       <div
-                        className="w-3 h-3 rounded-full bg-orange-500 flex-shrink-0"
+                        className="w-3 h-3 rounded-full bg-emerald-500 flex-shrink-0"
                         title="Active label for drawing"
                       />
                     )}
                     {selectedLabelId !== label.id && (
                       <div
-                        className="w-3 h-3 rounded-full border-2 border-gray-500 flex-shrink-0"
+                        className="w-3 h-3 rounded-full border-2 border-gray-400 flex-shrink-0"
                         title="Click label name to set as active"
                       />
                     )}
@@ -444,20 +444,20 @@ export default function Sidebar({
                     {labelAnnotations.length > 0 && (
                       <button
                         onClick={() => toggleSelectAllForLabel(label.id)}
-                        className="p-1 hover:bg-gray-600 rounded transition-colors"
+                        className="p-1 hover:bg-gray-200 rounded transition-colors"
                         title={allSelected ? 'Deselect all in this label' : 'Select all in this label'}
                       >
                         <div
                           className={`w-4 h-4 border-2 rounded flex items-center justify-center ${
                             allSelected
-                              ? 'bg-orange-500 border-orange-500'
+                              ? 'bg-emerald-500 border-emerald-500'
                               : someSelected
-                              ? 'bg-orange-500/50 border-orange-500'
-                              : 'border-gray-500'
+                              ? 'bg-emerald-500/50 border-emerald-500'
+                              : 'border-gray-400'
                           }`}
                         >
                           {(allSelected || someSelected) && (
-                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                             </svg>
                           )}
@@ -468,7 +468,7 @@ export default function Sidebar({
                     {/* Expand/Collapse */}
                     <button
                       onClick={() => toggleLabelExpanded(label.id)}
-                      className="p-1 hover:bg-gray-600 rounded transition-colors text-gray-400"
+                      className="p-1 hover:bg-gray-200 rounded transition-colors text-gray-600"
                       title={isExpanded ? 'Collapse label group' : 'Expand label group'}
                     >
                       {isExpanded ? (
@@ -487,21 +487,21 @@ export default function Sidebar({
                     {/* Label Name */}
                     <button
                       onClick={() => toggleLabelExpanded(label.id)}
-                      className="flex-1 text-left text-sm font-medium text-white truncate"
+                      className="flex-1 text-left text-sm font-medium text-gray-900 truncate"
                       title="Expand/collapse label group"
                     >
                       {label.name}
                     </button>
 
                     {/* Count Badge */}
-                    <div className="px-2 py-0.5 bg-orange-500 text-white text-xs rounded-full font-medium">
+                    <div className="px-2 py-0.5 bg-emerald-500 text-gray-900 text-xs rounded-full font-medium">
                       {labelAnnotations.length}
                     </div>
 
                     {/* Eye Icon - toggle all annotations for this label */}
                     <button
                       onClick={() => toggleLabelVisibility(label.id)}
-                      className="p-1 hover:bg-gray-600 rounded transition-colors text-gray-400 hover:text-white"
+                      className="p-1 hover:bg-gray-200 rounded transition-colors text-gray-600 hover:text-gray-900"
                       title={allHidden ? "Show all annotations in this label" : "Hide all annotations in this label"}
                     >
                       {allHidden ? (
@@ -514,9 +514,9 @@ export default function Sidebar({
 
                   {/* Annotation List */}
                   {isExpanded && (
-                    <div className="bg-gray-800">
+                    <div className="bg-white">
                       {labelAnnotations.length === 0 ? (
-                        <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                        <div className="px-4 py-3 text-sm text-gray-600 text-center">
                           No annotations
                         </div>
                       ) : (
@@ -528,25 +528,25 @@ export default function Sidebar({
                           return (
                             <div
                               key={ann.id}
-                              className={`px-3 py-2 flex items-center gap-2 hover:bg-gray-700/30 transition-colors ${
-                                isActiveAnnotation ? 'bg-orange-500/20 border-l-2 border-orange-500' : ''
+                              className={`px-3 py-2 flex items-center gap-2 hover:bg-gray-100/30 transition-colors ${
+                                isActiveAnnotation ? 'bg-emerald-500/20 border-l-2 border-emerald-500' : ''
                               }`}
                             >
                               {/* Selection Checkbox */}
                               <button
                                 onClick={() => toggleSelection(ann.id)}
-                                className="p-1 hover:bg-gray-600 rounded transition-colors"
+                                className="p-1 hover:bg-gray-200 rounded transition-colors"
                                 title={isSelected ? 'Deselect annotation' : 'Select annotation'}
                               >
                                 <div
                                   className={`w-4 h-4 border-2 rounded flex items-center justify-center ${
                                     isSelected
-                                      ? 'bg-orange-500 border-orange-500'
-                                      : 'border-gray-500'
+                                      ? 'bg-emerald-500 border-emerald-500'
+                                      : 'border-gray-400'
                                   }`}
                                 >
                                   {isSelected && (
-                                    <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-3 h-3 text-gray-900" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
                                     </svg>
                                   )}
@@ -554,14 +554,14 @@ export default function Sidebar({
                               </button>
 
                               {/* Annotation Icon */}
-                              <div className="text-gray-400">
+                              <div className="text-gray-600">
                                 {getAnnotationIcon(ann.type)}
                               </div>
 
                               {/* Annotation Number */}
                               <button
                                 onClick={() => onSelectAnnotation(ann.id)}
-                                className="flex-1 text-left text-sm text-gray-300 hover:text-white transition-colors flex items-center gap-1"
+                                className="flex-1 text-left text-sm text-gray-700 hover:text-gray-900 transition-colors flex items-center gap-1"
                                 title="Select and focus this annotation"
                               >
                                 {ann.isAutoGenerated && (
@@ -578,7 +578,7 @@ export default function Sidebar({
                               {/* Visibility Toggle */}
                               <button
                                 onClick={() => onToggleAnnotationVisibility(ann.id)}
-                                className="p-1 hover:bg-gray-600 rounded transition-colors text-gray-400 hover:text-white"
+                                className="p-1 hover:bg-gray-200 rounded transition-colors text-gray-600 hover:text-gray-900"
                                 title={isVisible ? 'Hide annotation on canvas' : 'Show annotation on canvas'}
                               >
                                 {isVisible ? (
@@ -591,7 +591,7 @@ export default function Sidebar({
                               {/* Delete Button */}
                               <button
                                 onClick={() => onDeleteAnnotation(ann.id)}
-                                className="p-1 hover:bg-red-600 rounded transition-colors text-gray-400 hover:text-white"
+                                className="p-1 hover:bg-red-600 rounded transition-colors text-gray-600 hover:text-gray-900"
                                 title="Delete annotation (Del)"
                               >
                                 <Trash2 className="w-4 h-4" />
@@ -617,20 +617,20 @@ export default function Sidebar({
         maxWidth="md"
       >
         <div className="space-y-4">
-          <p className="text-gray-300">
+          <p className="text-gray-700">
             Are you sure you want to delete all {annotations.length} annotations for this image?
           </p>
           <p className="text-red-400 text-sm">This action cannot be undone.</p>
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setShowDeleteAllConfirm(false)}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+              className="px-4 py-2 bg-white hover:bg-gray-200 text-gray-900 rounded transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleDeleteAll}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded transition-colors"
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-gray-900 rounded transition-colors"
             >
               Delete All
             </button>
@@ -646,13 +646,13 @@ export default function Sidebar({
         maxWidth="md"
       >
         <div className="space-y-4">
-          <p className="text-gray-300">
+          <p className="text-gray-700">
             Remove auto-generated annotations with confidence below the threshold.
           </p>
 
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-sm font-medium text-gray-300">
+              <label className="text-sm font-medium text-gray-700">
                 Confidence Threshold
               </label>
               <span className="text-orange-500 font-medium">
@@ -668,15 +668,15 @@ export default function Sidebar({
               onChange={(e) => setConfidenceThreshold(parseFloat(e.target.value))}
               className="w-full"
             />
-            <div className="flex justify-between text-xs text-gray-500">
+            <div className="flex justify-between text-xs text-gray-600">
               <span>0%</span>
               <span>50%</span>
               <span>100%</span>
             </div>
           </div>
 
-          <div className="bg-gray-700 rounded p-3">
-            <p className="text-sm text-gray-300">
+          <div className="bg-white rounded p-3">
+            <p className="text-sm text-gray-700">
               <span className="font-medium text-red-400">{lowConfidenceCount}</span> annotations
               will be removed (below {Math.round(confidenceThreshold * 100)}%)
             </p>
@@ -685,14 +685,14 @@ export default function Sidebar({
           <div className="flex justify-end gap-3">
             <button
               onClick={() => setShowThresholdModal(false)}
-              className="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded transition-colors"
+              className="px-4 py-2 bg-white hover:bg-gray-200 text-gray-900 rounded transition-colors"
             >
               Cancel
             </button>
             <button
               onClick={handleRemoveLowConfidence}
               disabled={lowConfidenceCount === 0}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded transition-colors"
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-gray-900 rounded transition-colors"
             >
               Remove {lowConfidenceCount}
             </button>
