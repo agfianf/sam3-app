@@ -33,7 +33,7 @@ function Hero() {
                 Start Annotating Now
               </Link>
               <a
-                href="https://github.com/yourusername/annotateau"
+                href="https://github.com/agfianf/annotate-anu.git"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="px-8 py-4 border-2 border-emerald-600 text-emerald-600 hover:bg-emerald-50 text-lg font-semibold rounded-lg transition-colors"

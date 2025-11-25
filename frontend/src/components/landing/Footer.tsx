@@ -46,7 +46,7 @@ function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <a
-                  href="https://github.com/yourusername/annotateau"
+                  href="https://github.com/agfianf/annotate-anu.git"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-emerald-400 transition-colors"
@@ -92,7 +92,7 @@ function Footer() {
           </p>
           <div className="flex items-center gap-4">
             <a
-              href="https://github.com/yourusername/annotateau"
+              href="https://github.com/agfianf/annotate-anu.git"
               target="_blank"
               rel="noopener noreferrer"
               className="hover:text-emerald-400 transition-colors"

@@ -10,11 +10,11 @@
     Your images never leave your browser. Free, open-source, and built for high-performance computer vision workflows.
   </p>
 
-  [![Open Source](https://img.shields.io/badge/Open%20Source-100%25-brightgreen)](https://github.com/yourusername/annotateau)
-  [![Privacy](https://img.shields.io/badge/Privacy-No%20Server%20Uploads-blue)](https://github.com/yourusername/annotateau)
+  [![Open Source](https://img.shields.io/badge/Open%20Source-100%25-brightgreen)](https://github.com/agfianf/annotate-anu.git)
+  [![Privacy](https://img.shields.io/badge/Privacy-No%20Server%20Uploads-blue)](https://github.com/agfianf/annotate-anu.git)
   [![Powered by SAM3](https://img.shields.io/badge/Powered%20by-Meta%20SAM3-0467DF)](https://huggingface.co/facebook/sam3)
 
-  [Get Started](#quick-start) · [View Demo](https://annotateau.example.com) · [Report Bug](https://github.com/yourusername/annotateau/issues)
+  [Get Started](#quick-start) · [View Demo](https://annotateau.example.com) · [Report Bug](https://github.com/agfianf/annotate-anu.git/issues)
 
 </div>
 
@@ -49,6 +49,10 @@
 - **💾 Export Ready**: Export to COCO JSON, YOLO format, or ZIP archives with one click. Industry-standard formats ready for your ML pipelines.
 
 - **🔒 Local-First Storage**: Your data stays local with IndexedDB - no server uploads, total privacy. All processing happens in your browser or on your local backend.
+
+
+![feature](assets/features.gif)
+
 
 ## Architecture
 
@@ -150,9 +154,9 @@ MIT License - see [LICENSE](LICENSE) file for details.
   <p><strong>Ready to speed up your CV pipeline?</strong></p>
   <p>© 2025 AnnotateANU. Built for the Computer Vision Community.</p>
   <p>
-    <a href="https://github.com/yourusername/annotateau">GitHub</a> ·
+    <a href="https://github.com/agfianf/annotate-anu.git">GitHub</a> ·
     <a href="https://annotateau.example.com">Website</a> ·
-    <a href="https://github.com/yourusername/annotateau/issues">Issues</a>
+    <a href="https://github.com/agfianf/annotate-anu.git/issues">Issues</a>
   </p>
 </div>
 

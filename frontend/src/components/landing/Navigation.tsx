@@ -41,7 +41,7 @@ function Navigation() {
             How It Works
           </a>
           <a
-            href="https://github.com/yourusername/annotateau"
+            href="https://github.com/agfianf/annotate-anu.git"
             target="_blank"
             rel="noopener noreferrer"
             className="text-gray-600 hover:text-emerald-600 transition-colors"
@@ -88,7 +88,7 @@ function Navigation() {
               How It Works
             </a>
             <a
-              href="https://github.com/yourusername/annotateau"
+              href="https://github.com/agfianf/annotate-anu.git"
               target="_blank"
               rel="noopener noreferrer"
               onClick={closeMobileMenu}
