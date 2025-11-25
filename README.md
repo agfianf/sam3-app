@@ -126,161 +126,6 @@ make docker-up
 # API Docs: http://localhost:8000/docs
 ```
 
-### Local Development
-
-#### Backend Only
-
-```bash
-cd backend
-cp .env.example .env  # Add your HF_TOKEN
-make backend-install
-make backend-run
-
-# API at http://localhost:8000
-```
-
-#### Frontend Only
-
-```bash
-cd frontend
-cp .env.example .env
-make frontend-install
-make frontend-dev
-
-# App at http://localhost:5173
-```
-
-## Development Commands
-
-### Monorepo Commands
-
-```bash
-make help            # Show all available commands
-make dev             # Start both backend and frontend (Docker)
-make install         # Install all dependencies
-make clean           # Clean all cache and build files
-```
-
-### Backend Commands
-
-```bash
-make backend-install  # Install Python dependencies
-make backend-run      # Run API locally
-make backend-test     # Run tests
-make backend-format   # Format code with ruff
-make backend-lint     # Lint code
-```
-
-### Frontend Commands
-
-```bash
-make frontend-install # Install npm dependencies
-make frontend-dev     # Start dev server
-make frontend-build   # Build for production
-```
-
-### Docker Commands
-
-```bash
-make docker-up        # Start all services
-make docker-down      # Stop all services
-make docker-logs service=backend    # View backend logs
-make docker-logs service=frontend   # View frontend logs
-make docker-build     # Rebuild images
-make docker-restart service=backend # Restart backend
-make docker-shell service=backend   # Shell into backend container
-```
-
-## API Documentation
-
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
-- **OpenAPI JSON**: http://localhost:8000/openapi.json
-
-## Tech Stack
-
-### Backend
-- **FastAPI** - Modern Python web framework
-- **SAM3** - Segment Anything Model 3 (via HuggingFace)
-- **UV** - Fast Python package manager
-- **Python 3.12**
-
-### Frontend
-- **React 18** + **TypeScript**
-- **Vite** - Next-generation build tool
-- **Konva** + **React-Konva** - Canvas manipulation
-- **IndexedDB** - Local browser storage for images and annotations
-- **Tailwind CSS** - Utility-first styling
-- **Axios** - HTTP client
-
-### Infrastructure
-- **Docker** + **Docker Compose**
-- **Nginx** - Production frontend server
-
-## Project Structure
-
-### Backend (`/backend`)
-```
-backend/
-├── src/app/
-│   ├── main.py              # FastAPI app
-│   ├── config.py            # Settings
-│   ├── integrations/sam3/   # SAM3 model integration
-│   ├── routers/             # API endpoints
-│   ├── schemas/             # Pydantic models
-│   └── helpers/             # Utilities
-├── Dockerfile
-├── pyproject.toml
-└── README.md
-```
-
-### Frontend (`/frontend`)
-```
-frontend/
-├── src/
-│   ├── components/
-│   │   ├── Canvas.tsx           # Annotation canvas
-│   │   ├── LeftSidebar.tsx      # Tool selection & AI prompts
-│   │   ├── Sidebar.tsx          # Annotations list
-│   │   ├── TextPromptPanel.tsx  # SAM3 text prompts
-│   │   ├── BboxPromptPanel.tsx  # SAM3 bbox prompts
-│   │   ├── ExportModal.tsx      # Export interface
-│   │   └── ui/                  # Reusable UI components
-│   ├── lib/
-│   │   ├── storage.ts           # IndexedDB persistence
-│   │   ├── sam3-client.ts       # SAM3 API client
-│   │   └── coco-export.ts       # Export utilities
-│   ├── App.tsx
-│   └── main.tsx
-├── Dockerfile
-├── nginx.conf
-└── package.json
-```
-
-## GPU Support
-
-To enable GPU acceleration for faster inference:
-
-1. Install [nvidia-docker](https://github.com/NVIDIA/nvidia-docker)
-2. Uncomment GPU section in `docker-compose.yml`:
-```yaml
-deploy:
-  resources:
-    reservations:
-      devices:
-        - driver: nvidia
-          count: 1
-          capabilities: [gpu]
-```
-3. Restart: `make docker-down && make docker-up`
-
-## Performance
-
-- **With GPU**: ~200-500ms per image
-- **CPU only**: 5-10x slower than GPU
-
-Batch processing recommended for multiple images.
-
 ## 🚀 Roadmap - Coming Soon
 
 We are constantly evolving. Here's what's shipping next to AnnotateANU:
@@ -291,38 +136,6 @@ Connect your existing custom models via API. Pre-label your images using your ow
 ### ☁️ Enterprise Storage Integration
 Move beyond browser storage. We're adding native integration for MinIO and S3-compatible object storage, allowing you to pull and sync datasets directly from your cloud buckets.
 
-### 📋 Additional Planned Features
-- [ ] Pascal VOC export format (COCO and YOLO already supported)
-- [ ] Annotation history and versioning with persistent undo/redo
-- [ ] Video annotation support
-- [ ] Multi-user collaboration
-- [ ] Project management and datasets
-- [ ] CVAT integration for advanced labeling
-
-## Troubleshooting
-
-### Model Download Issues
-
-Pre-download the model:
-```bash
-make docker-shell service=backend
-python -c "from transformers import Sam3Model; Sam3Model.from_pretrained('facebook/sam3')"
-```
-
-### Out of Memory
-
-Reduce limits in `backend/.env`:
-```bash
-MAX_BATCH_SIZE=5
-MAX_IMAGE_DIMENSION=2048
-```
-
-### Frontend Not Loading
-
-Ensure backend is running and accessible:
-```bash
-curl http://localhost:8000/api/v1/sam3/health
-```
 
 ## 🤝 Contributing
 
@@ -341,6 +154,13 @@ Want to influence what we build next? Join our community on GitHub and share you
 
 MIT License - see [LICENSE](LICENSE) file for details.
 
+## References
+
+- [SAM3 Model](https://huggingface.co/facebook/sam3)
+- [T-REX Label](https://www.trexlabel.com/)
+- [MakeSense.ai](https://www.makesense.ai/)
+
+
 ---
 
 <div align="center">
@@ -353,11 +173,3 @@ MIT License - see [LICENSE](LICENSE) file for details.
   </p>
 </div>
 
-## References
-
-- [SAM3 Model](https://huggingface.co/facebook/sam3)
-- [T-REX Label](https://www.trexlabel.com/)
-- [MakeSense.ai](https://www.makesense.ai/)
-- [FastAPI](https://fastapi.tiangolo.com/)
-- [React](https://react.dev/)
-- [Vite](https://vite.dev/)
