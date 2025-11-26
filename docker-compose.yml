@@ -4,7 +4,7 @@ services:
   # Backend - SAM3 FastAPI Application
   backend:
     build:
-      context: ./backend
+      context: ./apps/api-inference
       dockerfile: Dockerfile
     # images: sam3-be
     container_name: sam3-backend
@@ -12,10 +12,10 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./backend/src:/code/src  # Mount source for hot-reload
+      - ./apps/api-inference/src:/code/src  # Mount source for hot-reload
       - huggingface_cache:/root/.cache/huggingface  # Cache model downloads
     env_file:
-      - ./backend/.env
+      - ./apps/api-inference/.env
     restart: unless-stopped
     networks:
       - sam3-network
@@ -31,7 +31,7 @@ services:
   # Frontend - React Annotation Platform
   frontend:
     build:
-      context: ./frontend
+      context: ./apps/web
       dockerfile: Dockerfile
       target: development
     # images: sam3-fe
@@ -39,10 +39,10 @@ services:
     ports:
       - "5173:5173"
     volumes:
-      - ./frontend:/app
+      - ./apps/web:/app
       - /app/node_modules
     env_file:
-      - ./frontend/.env
+      - ./apps/web/.env
     depends_on:
       - backend
     networks:
