@@ -1,0 +1,26 @@
+{
+  "name": "sam3-monorepo",
+  "private": true,
+  "version": "0.1.0",
+  "description": "SAM3 Annotation Platform - Turborepo Monorepo",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "test": "turbo run test",
+    "clean": "turbo run clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "^2.6.1"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
+  "packageManager": "npm@10.9.2"
+}
