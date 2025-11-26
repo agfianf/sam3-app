@@ -18,7 +18,7 @@
     "lint": "tsc --noEmit"
   },
   "devDependencies": {
-    "@sam3/tsconfig": "workspace:*",
+    "@sam3/tsconfig": "file:../tsconfig",
     "typescript": "~5.9.3"
   }
 }

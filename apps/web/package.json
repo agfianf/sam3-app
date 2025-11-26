@@ -11,7 +11,7 @@
     "clean": "rm -rf dist node_modules .vite"
   },
   "dependencies": {
-    "@sam3/shared-types": "workspace:*",
+    "@sam3/shared-types": "file:../../packages/shared-types",
     "@tailwindcss/postcss": "^4.1.17",
     "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
@@ -27,7 +27,7 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
-    "@sam3/tsconfig": "workspace:*",
+    "@sam3/tsconfig": "file:../../packages/tsconfig",
     "@eslint/js": "^9.39.1",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
