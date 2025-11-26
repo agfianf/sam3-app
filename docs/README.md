@@ -6,6 +6,7 @@ Welcome to the AnnotateANU documentation directory.
 
 ```
 docs/
+├── getting-started.md         # 🆕 Complete guide to running AnnotateANU
 ├── architecture/              # System architecture documents
 ├── api-specs/                 # API specifications and contracts
 ├── byom-integration-guide/    # Bring Your Own Model integration guide
@@ -13,6 +14,21 @@ docs/
 ```
 
 ## 📚 Documentation Sections
+
+### 🆕 Getting Started Guide (`getting-started.md`)
+
+**Complete guide for new developers!**
+
+Covers:
+- What is Turborepo and why we use it
+- 3 different ways to run the project
+- Complete command reference
+- Development workflows
+- Troubleshooting and best practices
+
+**👉 [Read the Getting Started Guide](./getting-started.md)**
+
+---
 
 ### Architecture (`architecture/`)
 
@@ -52,6 +68,7 @@ Guide for integrating custom models:
 
 ## 🚀 Quick Links
 
+- **[Getting Started Guide](./getting-started.md)** ⭐ **START HERE!**
 - [Main README](../README.md)
 - [CLAUDE.md - AI Development Guide](../CLAUDE.md)
 - [Docker Deployment Modes](../docker/README.md)
