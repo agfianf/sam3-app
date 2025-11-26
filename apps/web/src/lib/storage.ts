@@ -1,7 +1,7 @@
 import type { ImageData, Annotation, Label, LabelGroup } from '@/types/annotations'
 
 const DB_NAME = 'sam3-annotation-db'
-const DB_VERSION = 2 // Incremented for label groups feature
+const DB_VERSION = 3 // Incremented for folder upload support
 
 // Object store names
 const STORES = {
@@ -68,6 +68,22 @@ export function openDB(): Promise<IDBDatabase> {
               label.sortOrder = 0
             }
             labelsStore.put(label)
+          })
+        }
+      }
+
+      // Migration: Add folder upload fields (v2 -> v3)
+      if (oldVersion < 3 && db.objectStoreNames.contains(STORES.IMAGES)) {
+        const imagesStore = transaction.objectStore(STORES.IMAGES)
+        const getAllRequest = imagesStore.getAll()
+
+        getAllRequest.onsuccess = () => {
+          const images = getAllRequest.result
+          images.forEach((image: any) => {
+            if (!('displayName' in image)) {
+              image.displayName = image.name
+            }
+            imagesStore.put(image)
           })
         }
       }

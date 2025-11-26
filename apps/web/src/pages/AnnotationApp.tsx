@@ -14,6 +14,7 @@ import { useHistory } from '../hooks/useHistory'
 import { useKeyboardShortcuts } from '../hooks/useKeyboardShortcuts'
 import { useStorage } from '../hooks/useStorage'
 import { DEFAULT_LABEL_COLOR, PRESET_COLORS } from '../lib/colors'
+import { isAllowedImageFile, getRelativePath, getDisplayName, ALLOWED_IMAGE_EXTENSIONS, isFolderUploadSupported } from '../lib/file-utils'
 import { annotationStorage } from '../lib/storage'
 import type { Annotation, ImageData, PolygonAnnotation, PromptMode, RectangleAnnotation, Tool } from '../types/annotations'
 
@@ -54,6 +55,7 @@ const ImageThumbnail = ({
   return (
     <div
       onClick={onClick}
+      title={image.displayName}
       className={`group relative flex-shrink-0 cursor-pointer rounded overflow-hidden border-2 transition-all ${
         isActive
           ? 'border-emerald-500 ring-2 ring-emerald-500/50'
@@ -62,7 +64,7 @@ const ImageThumbnail = ({
     >
       <img
         src={thumbnailUrl}
-        alt={image.name}
+        alt={image.displayName}
         className="h-20 w-auto object-contain bg-gray-900"
       />
       {annotationCount > 0 && (
@@ -101,6 +103,7 @@ function AnnotationApp() {
   })
   const [isAutoApplyLoading, setIsAutoApplyLoading] = useState(false)
   const [selectedColor, setSelectedColor] = useState<string>(DEFAULT_LABEL_COLOR)
+  const [folderUploadSupported] = useState(isFolderUploadSupported())
 
   // Zoom and pan state
   const [zoomLevel, setZoomLevel] = useState(1)
@@ -147,8 +150,49 @@ function AnnotationApp() {
   }, [promptMode])
 
   const handleImageUpload = async (files: FileList) => {
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
+    const filesArray = Array.from(files)
+    let uploadedCount = 0
+    let skippedCount = 0
+    const skippedFiles: string[] = []
+
+    // Filter files by allowed extensions
+    const validFiles = filesArray.filter(file => {
+      const isValid = isAllowedImageFile(file.name)
+      if (!isValid) {
+        skippedCount++
+        skippedFiles.push(file.name)
+      }
+      return isValid
+    })
+
+    // Show warning if files were skipped
+    if (skippedCount > 0) {
+      const extensionsList = ALLOWED_IMAGE_EXTENSIONS.join(', ')
+      toast.error(
+        `Skipped ${skippedCount} file(s) with unsupported extensions. Supported: ${extensionsList}`,
+        { duration: 5000 }
+      )
+      console.warn('Skipped files:', skippedFiles)
+    }
+
+    if (validFiles.length === 0) {
+      toast.error('No valid image files found')
+      return
+    }
+
+    // Process valid files
+    for (let i = 0; i < validFiles.length; i++) {
+      const file = validFiles[i]
+      const relativePath = getRelativePath(file)
+      const displayName = getDisplayName(file)
+
+      // Check for duplicates - skip if already exists
+      const isDuplicate = images.some(img => img.displayName === displayName)
+      if (isDuplicate) {
+        skippedCount++
+        skippedFiles.push(displayName)
+        continue
+      }
 
       // Create image element to get dimensions
       const img = new Image()
@@ -159,6 +203,8 @@ function AnnotationApp() {
           const imageData: ImageData = {
             id: `${Date.now()}-${i}`,
             name: file.name,
+            relativePath: relativePath !== file.name ? relativePath : undefined,
+            displayName: displayName,
             width: img.width,
             height: img.height,
             blob: file,
@@ -166,11 +212,30 @@ function AnnotationApp() {
           }
 
           await addImage(imageData)
+          uploadedCount++
           URL.revokeObjectURL(objectUrl)
           resolve()
         }
+
+        img.onerror = () => {
+          console.error(`Failed to load image: ${file.name}`)
+          skippedCount++
+          skippedFiles.push(file.name)
+          URL.revokeObjectURL(objectUrl)
+          resolve()
+        }
+
         img.src = objectUrl
       })
+    }
+
+    // Show success message
+    if (uploadedCount > 0) {
+      const folderUploaded = validFiles.some(f => getRelativePath(f) !== f.name)
+      const message = folderUploaded
+        ? `Uploaded ${uploadedCount} image(s) from folder`
+        : `Uploaded ${uploadedCount} image(s)`
+      toast.success(message)
     }
   }
 
@@ -707,7 +772,7 @@ function AnnotationApp() {
                     {currentImageNumber} / {images.length}
                   </span>
                   <span className="text-gray-400 text-sm">|</span>
-                  <span className="text-gray-900 text-sm font-mono">{currentImage.name}</span>
+                  <span className="text-gray-900 text-sm font-mono">{currentImage.displayName}</span>
                   <button
                     onClick={copyFilenameToClipboard}
                     className="p-1 hover:bg-gray-100 rounded transition-colors text-gray-600 hover:text-gray-900"
@@ -798,24 +863,55 @@ function AnnotationApp() {
 
           {/* Thumbnails */}
           <div className="flex-1 flex gap-2 overflow-x-auto py-2">
-            {/* Upload placeholder button */}
-            <label className="flex-shrink-0 cursor-pointer group" title="Upload images to annotate">
-              <div className="h-20 w-20 border-2 border-dashed border-gray-300 hover:border-emerald-500 rounded flex flex-col items-center justify-center gap-1 transition-colors bg-white hover:bg-emerald-50">
-                <Upload className="w-6 h-6 text-gray-400 group-hover:text-emerald-600 transition-colors" />
-                <span className="text-xs text-gray-500 group-hover:text-emerald-600 transition-colors">Add</span>
-              </div>
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(e) => {
-                  if (e.target.files) {
-                    handleImageUpload(e.target.files)
-                  }
-                }}
-              />
-            </label>
+            {/* Upload buttons container */}
+            <div className="flex-shrink-0 flex gap-2">
+              {/* Upload Files Button */}
+              <label className="cursor-pointer group" title="Upload image files">
+                <div className="h-20 w-20 border-2 border-dashed border-gray-300 hover:border-emerald-500 rounded flex flex-col items-center justify-center gap-1 transition-colors bg-white hover:bg-emerald-50">
+                  <Upload className="w-5 h-5 text-gray-400 group-hover:text-emerald-600 transition-colors" />
+                  <span className="text-xs text-gray-500 group-hover:text-emerald-600 transition-colors">Files</span>
+                </div>
+                <input
+                  type="file"
+                  accept=".jpg,.jpeg,.png,.webp,.bmp"
+                  multiple
+                  className="hidden"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      handleImageUpload(e.target.files)
+                    }
+                  }}
+                />
+              </label>
+
+              {/* Upload Folder Button */}
+              {folderUploadSupported && (
+                <label className="cursor-pointer group" title="Upload entire folder of images">
+                  <div className="h-20 w-20 border-2 border-dashed border-blue-300 hover:border-blue-500 rounded flex flex-col items-center justify-center gap-1 transition-colors bg-white hover:bg-blue-50">
+                    <svg
+                      className="w-5 h-5 text-gray-400 group-hover:text-blue-600 transition-colors"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                    </svg>
+                    <span className="text-xs text-gray-500 group-hover:text-blue-600 transition-colors">Folder</span>
+                  </div>
+                  <input
+                    type="file"
+                    accept=".jpg,.jpeg,.png,.webp,.bmp"
+                    {...({ webkitdirectory: "", mozdirectory: "", directory: "" } as any)}
+                    className="hidden"
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        handleImageUpload(e.target.files)
+                      }
+                    }}
+                  />
+                </label>
+              )}
+            </div>
 
             {images.map((image) => {
               // Count annotations for this specific image

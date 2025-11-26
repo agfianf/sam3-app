@@ -30,15 +30,16 @@ services:
   # Frontend - React Annotation Platform
   frontend:
     build:
-      context: ../apps/web
-      dockerfile: Dockerfile
+      context: ..
+      dockerfile: apps/web/Dockerfile
       target: development
     container_name: anu-frontend-dev
     ports:
       - "5173:5173"
     volumes:
-      - ../apps/web:/app
-      - /app/node_modules
+      - ../apps/web:/workspace/apps/web
+      - ../packages:/workspace/packages
+      - /workspace/apps/web/node_modules
     env_file:
       - ../apps/web/.env
     depends_on:

@@ -29,7 +29,7 @@ export function exportToCOCO(
   // Convert images
   const cocoImages: COCOImage[] = images.map((img, index) => ({
     id: index + 1,
-    file_name: img.name,
+    file_name: img.relativePath || img.name,
     width: img.width,
     height: img.height,
     date_captured: new Date(img.createdAt).toISOString(),

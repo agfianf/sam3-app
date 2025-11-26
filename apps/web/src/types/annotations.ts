@@ -71,6 +71,8 @@ export type Annotation = RectangleAnnotation | PolygonAnnotation | PointAnnotati
 export interface ImageData {
   id: string
   name: string
+  relativePath?: string
+  displayName: string
   width: number
   height: number
   blob: Blob
