@@ -1,0 +1,200 @@
+version: '3.8'
+
+# TEAM MODE - Full collaborative stack
+# PostgreSQL + MinIO + Redis + Celery workers
+services:
+  # Load Balancer - Traefik
+  traefik:
+    image: traefik:v3.0
+    container_name: anu-traefik
+    command:
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+    ports:
+      - "80:80"
+      - "443:443"
+      - "8080:8080"  # Traefik dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks:
+      - anu-network
+    restart: unless-stopped
+
+  # PostgreSQL - Metadata database
+  postgres:
+    image: postgres:16-alpine
+    container_name: anu-postgres
+    environment:
+      - POSTGRES_DB=annotate_anu
+      - POSTGRES_USER=anu_user
+      - POSTGRES_PASSWORD=anu_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - anu-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U anu_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO - Object storage
+  minio:
+    image: minio/minio:latest
+    container_name: anu-minio
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - anu-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Redis - Cache and message broker
+  redis:
+    image: redis:7-alpine
+    container_name: anu-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - anu-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Backend - SAM3 Inference API
+  api-inference:
+    build:
+      context: ../apps/api-inference
+      dockerfile: Dockerfile
+    container_name: anu-api-inference
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - huggingface_cache:/root/.cache/huggingface
+    env_file:
+      - ../apps/api-inference/.env
+    environment:
+      - MODE=team
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    networks:
+      - anu-network
+    restart: unless-stopped
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-inference.rule=PathPrefix(`/api/v1/inference`)"
+      - "traefik.http.services.api-inference.loadbalancer.server.port=8000"
+
+  # Backend - Core API (placeholder for future implementation)
+  api-core:
+    build:
+      context: ../apps/api-core
+      dockerfile: Dockerfile
+    container_name: anu-api-core
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8001
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://anu_user:anu_password@postgres:5432/annotate_anu
+      - REDIS_URL=redis://redis:6379
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=minioadmin
+      - MINIO_SECRET_KEY=minioadmin
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - anu-network
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api-core.rule=PathPrefix(`/api/v1`)"
+      - "traefik.http.services.api-core.loadbalancer.server.port=8001"
+
+  # Celery Worker - Background tasks (placeholder)
+  worker:
+    build:
+      context: ../workers
+      dockerfile: Dockerfile
+    container_name: anu-worker
+    command: celery -A tasks worker --loglevel=info
+    environment:
+      - DATABASE_URL=postgresql://anu_user:anu_password@postgres:5432/annotate_anu
+      - REDIS_URL=redis://redis:6379
+      - MINIO_ENDPOINT=minio:9000
+    depends_on:
+      - postgres
+      - redis
+      - minio
+    networks:
+      - anu-network
+    restart: unless-stopped
+
+  # Frontend - React App (Team Mode UI)
+  frontend:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile
+      target: production
+    container_name: anu-frontend-team
+    environment:
+      - VITE_MODE=team
+      - VITE_API_INFERENCE_URL=http://localhost/api/v1/inference
+      - VITE_API_CORE_URL=http://localhost/api/v1
+      - VITE_STORAGE=hybrid
+    depends_on:
+      - api-inference
+      - api-core
+    networks:
+      - anu-network
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.frontend.rule=PathPrefix(`/`)"
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+
+volumes:
+  postgres_data:
+    driver: local
+  minio_data:
+    driver: local
+  redis_data:
+    driver: local
+  huggingface_cache:
+    driver: local
+
+networks:
+  anu-network:
+    driver: bridge

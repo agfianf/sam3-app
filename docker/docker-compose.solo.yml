@@ -1,0 +1,58 @@
+version: '3.8'
+
+# SOLO MODE - Minimal local-first setup
+# IndexedDB-based storage, no team collaboration features
+services:
+  # Backend - SAM3 Inference API (minimal)
+  backend:
+    build:
+      context: ../apps/api-inference
+      dockerfile: Dockerfile
+    container_name: anu-backend-solo
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - huggingface_cache:/root/.cache/huggingface
+    env_file:
+      - ../apps/api-inference/.env
+    environment:
+      - MODE=solo
+      - ENABLE_AUTH=false
+    restart: unless-stopped
+    networks:
+      - anu-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Frontend - React App (Solo Mode UI)
+  frontend:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile
+      target: production
+    container_name: anu-frontend-solo
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_MODE=solo
+      - VITE_API_URL=http://localhost:8000
+      - VITE_STORAGE=indexeddb
+    depends_on:
+      - backend
+    networks:
+      - anu-network
+    restart: unless-stopped
+
+volumes:
+  huggingface_cache:
+    driver: local
+
+networks:
+  anu-network:
+    driver: bridge

@@ -2,6 +2,7 @@
         backend-install backend-run backend-test backend-format backend-lint \
         frontend-install frontend-dev frontend-build \
         docker-up docker-down docker-logs docker-build docker-restart docker-shell \
+        docker-up-solo docker-down-solo docker-up-team docker-down-team \
         turbo-dev turbo-build turbo-lint
 
 help:
@@ -31,8 +32,12 @@ help:
 	@echo "  frontend-build   - Build frontend for production"
 	@echo ""
 	@echo "Docker Commands:"
-	@echo "  docker-up        - Start all services with Docker Compose"
-	@echo "  docker-down      - Stop all services"
+	@echo "  docker-up        - Start development environment (hot-reload)"
+	@echo "  docker-down      - Stop development services"
+	@echo "  docker-up-solo   - Start SOLO mode (minimal, IndexedDB storage)"
+	@echo "  docker-down-solo - Stop SOLO mode services"
+	@echo "  docker-up-team   - Start TEAM mode (full stack: Postgres, MinIO, Redis, Workers)"
+	@echo "  docker-down-team - Stop TEAM mode services"
 	@echo "  docker-logs      - View logs (usage: make docker-logs service=backend|frontend)"
 	@echo "  docker-build     - Rebuild all Docker images"
 	@echo "  docker-restart   - Restart services (usage: make docker-restart service=backend|frontend)"
@@ -120,8 +125,8 @@ frontend-build:
 
 # Docker commands
 docker-up:
-	@echo "Starting Docker services..."
-	docker-compose up -d
+	@echo "Starting Docker services (development mode)..."
+	docker-compose -f docker/docker-compose.dev.yml up -d
 	@echo ""
 	@echo "✓ Services started:"
 	@echo "  Backend API: http://localhost:8000"
@@ -130,7 +135,36 @@ docker-up:
 
 docker-down:
 	@echo "Stopping Docker services..."
-	docker-compose down
+	docker-compose -f docker/docker-compose.dev.yml down
+
+docker-up-solo:
+	@echo "Starting Docker services (SOLO mode - minimal)..."
+	docker-compose -f docker/docker-compose.solo.yml up -d
+	@echo ""
+	@echo "✓ SOLO MODE Services started:"
+	@echo "  Backend API: http://localhost:8000"
+	@echo "  Frontend: http://localhost:3000"
+
+docker-down-solo:
+	@echo "Stopping SOLO mode services..."
+	docker-compose -f docker/docker-compose.solo.yml down
+
+docker-up-team:
+	@echo "Starting Docker services (TEAM mode - full stack)..."
+	docker-compose -f docker/docker-compose.team.yml up -d
+	@echo ""
+	@echo "✓ TEAM MODE Services started:"
+	@echo "  Traefik Dashboard: http://localhost:8080"
+	@echo "  Frontend: http://localhost"
+	@echo "  API Inference: http://localhost/api/v1/inference"
+	@echo "  API Core: http://localhost/api/v1"
+	@echo "  MinIO Console: http://localhost:9001"
+	@echo "  PostgreSQL: localhost:5432"
+	@echo "  Redis: localhost:6379"
+
+docker-down-team:
+	@echo "Stopping TEAM mode services..."
+	docker-compose -f docker/docker-compose.team.yml down
 
 docker-logs:
 ifdef service

@@ -1,0 +1,56 @@
+version: '3.8'
+
+# Development Environment - Full hot-reload setup
+services:
+  # Backend - SAM3 FastAPI Application
+  backend:
+    build:
+      context: ../apps/api-inference
+      dockerfile: Dockerfile
+    container_name: anu-backend-inference-dev
+    command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../apps/api-inference/src:/code/src  # Hot-reload enabled
+      - huggingface_cache:/root/.cache/huggingface
+    env_file:
+      - ../apps/api-inference/.env
+    restart: unless-stopped
+    networks:
+      - anu-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # Frontend - React Annotation Platform
+  frontend:
+    build:
+      context: ../apps/web
+      dockerfile: Dockerfile
+      target: development
+    container_name: anu-frontend-dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - ../apps/web:/app
+      - /app/node_modules
+    env_file:
+      - ../apps/web/.env
+    depends_on:
+      - backend
+    networks:
+      - anu-network
+    command: npm run dev -- --host 0.0.0.0
+
+volumes:
+  huggingface_cache:
+    driver: local
+
+networks:
+  anu-network:
+    driver: bridge
