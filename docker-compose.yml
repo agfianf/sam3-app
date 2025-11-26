@@ -31,16 +31,17 @@ services:
   # Frontend - React Annotation Platform
   frontend:
     build:
-      context: ./apps/web
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: apps/web/Dockerfile
       target: development
     # images: sam3-fe
     container_name: anu-frontend
     ports:
       - "5173:5173"
     volumes:
-      - ./apps/web:/app
-      - /app/node_modules
+      - .:/workspace
+      - /workspace/node_modules
+      - /workspace/apps/web/node_modules
     env_file:
       - ./apps/web/.env
     depends_on:

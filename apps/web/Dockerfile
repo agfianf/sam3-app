@@ -1,7 +1,7 @@
-# Stage 1: Development
+# Stage 1: Development (Monorepo-aware)
 FROM node:20 AS development
 
-WORKDIR /app
+WORKDIR /workspace
 
 RUN apt-get update && apt-get install -y \
     git \
@@ -10,12 +10,19 @@ RUN apt-get update && apt-get install -y \
     libsndfile1 \
     && rm -rf /var/lib/apt/lists/*
 
-
-# Copy package files
+# Copy root package.json and workspace config
 COPY package*.json ./
 
-# Install dependencies
+# Copy workspace packages
+COPY packages ./packages
+
+# Copy app package.json
+COPY apps/web/package*.json ./apps/web/
+
+# Install all workspace dependencies from root
 RUN npm install
+
+WORKDIR /workspace/apps/web
 
 # Expose Vite dev server port
 EXPOSE 5173
@@ -23,19 +30,24 @@ EXPOSE 5173
 # Start dev server (will be overridden by docker-compose command)
 CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
 
-# Stage 2: Build the application
+# Stage 2: Build the application (Monorepo-aware)
 FROM node:20 AS builder
 
-WORKDIR /app
+WORKDIR /workspace
 
-# Copy package files
+# Copy root package.json and workspace config
 COPY package*.json ./
 
-# Install dependencies
+# Copy workspace packages
+COPY packages ./packages
+
+# Copy app files
+COPY apps/web ./apps/web
+
+# Install all workspace dependencies from root
 RUN npm ci
 
-# Copy source code
-COPY . .
+WORKDIR /workspace/apps/web
 
 # Build the application
 RUN npm run build
@@ -44,10 +56,10 @@ RUN npm run build
 FROM nginx:alpine AS production
 
 # Copy built files from builder
-COPY --from=builder /app/dist /usr/share/nginx/html
+COPY --from=builder /workspace/apps/web/dist /usr/share/nginx/html
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy nginx configuration (if it exists in the web app)
+# COPY apps/web/nginx.conf /etc/nginx/conf.d/default.conf
 
 # Expose port 80
 EXPOSE 80
