@@ -7,7 +7,7 @@ services:
       context: ./apps/api-inference
       dockerfile: Dockerfile
     # images: sam3-be
-    container_name: sam3-backend
+    container_name: anu-backend-inference
     command: uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
     ports:
       - "8000:8000"
@@ -18,7 +18,7 @@ services:
       - ./apps/api-inference/.env
     restart: unless-stopped
     networks:
-      - sam3-network
+      - anu-network
     # Uncomment for GPU support (requires nvidia-docker)
     deploy:
       resources:
@@ -35,7 +35,7 @@ services:
       dockerfile: Dockerfile
       target: development
     # images: sam3-fe
-    container_name: sam3-frontend
+    container_name: anu-frontend
     ports:
       - "5173:5173"
     volumes:
@@ -46,7 +46,7 @@ services:
     depends_on:
       - backend
     networks:
-      - sam3-network
+      - anu-network
     command: npm run dev -- --host 0.0.0.0
 
   # Frontend Production (uncomment for production)
@@ -68,5 +68,5 @@ volumes:
     driver: local
 
 networks:
-  sam3-network:
+  anu-network:
     driver: bridge
