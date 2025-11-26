@@ -1,5 +1,5 @@
 {
-  "name": "frontend",
+  "name": "@sam3/web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -7,9 +7,11 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "clean": "rm -rf dist node_modules .vite"
   },
   "dependencies": {
+    "@sam3/shared-types": "workspace:*",
     "@tailwindcss/postcss": "^4.1.17",
     "axios": "^1.13.2",
     "class-variance-authority": "^0.7.1",
@@ -25,6 +27,7 @@
     "tailwind-merge": "^3.4.0"
   },
   "devDependencies": {
+    "@sam3/tsconfig": "workspace:*",
     "@eslint/js": "^9.39.1",
     "@types/node": "^24.10.1",
     "@types/react": "^19.2.5",
