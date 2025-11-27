@@ -41,6 +41,7 @@ const Canvas = React.memo(function Canvas({
   const stageRef = useRef<Konva.Stage>(null)
   const transformerRef = useRef<Konva.Transformer>(null)
   const animationFrameRef = useRef<number | null>(null)
+  const konvaImageRef = useRef<HTMLImageElement | null>(null)
   const [konvaImage, setKonvaImage] = useState<HTMLImageElement | null>(null)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
   const [scale, setScale] = useState(1)
@@ -97,6 +98,7 @@ const Canvas = React.memo(function Canvas({
       const img = new window.Image()
       img.src = image
       img.onload = () => {
+        konvaImageRef.current = img
         setKonvaImage(img)
         // Resize canvas to fit container while maintaining aspect ratio
         if (containerRef.current) {
@@ -116,27 +118,41 @@ const Canvas = React.memo(function Canvas({
     }
   }, [image])
 
-  // Resize on container size change
+  // Resize on container size change using ResizeObserver
+  // This detects both window resize AND flexbox layout changes (sidebar expand/collapse)
   useEffect(() => {
-    const handleResize = () => {
-      if (containerRef.current && konvaImage) {
-        const containerWidth = containerRef.current.offsetWidth
-        const containerHeight = containerRef.current.offsetHeight
-        const scaleX = containerWidth / konvaImage.width
-        const scaleY = containerHeight / konvaImage.height
-        // Remove 100% cap to allow upscaling for small images
-        const newScale = Math.min(scaleX, scaleY)
-        setScale(newScale)
-        setDimensions({
-          width: konvaImage.width * newScale,
-          height: konvaImage.height * newScale,
-        })
-      }
-    }
+    // Guard: Only create observer if container ref is available
+    if (!containerRef.current) return
 
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [konvaImage])
+    // Create ResizeObserver to watch container size changes
+    const resizeObserver = new ResizeObserver(() => {
+      // Use requestAnimationFrame to debounce rapid resize events
+      requestAnimationFrame(() => {
+        const img = konvaImageRef.current
+        if (containerRef.current && img) {
+          const containerWidth = containerRef.current.offsetWidth
+          const containerHeight = containerRef.current.offsetHeight
+          const scaleX = containerWidth / img.width
+          const scaleY = containerHeight / img.height
+          // Remove 100% cap to allow upscaling for small images
+          const newScale = Math.min(scaleX, scaleY)
+          setScale(newScale)
+          setDimensions({
+            width: img.width * newScale,
+            height: img.height * newScale,
+          })
+        }
+      })
+    })
+
+    // Start observing the container element
+    resizeObserver.observe(containerRef.current)
+
+    // Cleanup: disconnect observer when component unmounts
+    return () => {
+      resizeObserver.disconnect()
+    }
+  }, [])
 
   // Cleanup animation frame on unmount
   useEffect(() => {
