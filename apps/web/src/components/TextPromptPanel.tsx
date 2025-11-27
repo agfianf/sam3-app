@@ -514,7 +514,10 @@ export function TextPromptPanel({
               step="0.05"
               value={threshold}
               onChange={(e) => setThreshold(parseFloat(e.target.value))}
-              className="w-full h-2 bg-white rounded-lg appearance-none cursor-pointer accent-purple-600"
+              className="w-full slider-purple"
+              style={{
+                background: `linear-gradient(to right, rgb(147, 51, 234) 0%, rgb(147, 51, 234) ${threshold * 100}%, rgb(209, 213, 219) ${threshold * 100}%, rgb(209, 213, 219) 100%)`
+              }}
               disabled={isLoading}
             />
             <p className="mt-1 text-xs text-gray-600">
@@ -534,7 +537,10 @@ export function TextPromptPanel({
               step="0.05"
               value={maskThreshold}
               onChange={(e) => setMaskThreshold(parseFloat(e.target.value))}
-              className="w-full h-2 bg-white rounded-lg appearance-none cursor-pointer accent-purple-600"
+              className="w-full slider-purple"
+              style={{
+                background: `linear-gradient(to right, rgb(147, 51, 234) 0%, rgb(147, 51, 234) ${maskThreshold * 100}%, rgb(209, 213, 219) ${maskThreshold * 100}%, rgb(209, 213, 219) 100%)`
+              }}
               disabled={isLoading}
             />
             <p className="mt-1 text-xs text-gray-600">
@@ -550,7 +556,7 @@ export function TextPromptPanel({
           type="button"
           onClick={handleActionButtonClick}
           disabled={isLoading || !textPrompt.trim() || !labelId || (promptMode === 'single' && !currentImage)}
-          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-white disabled:opacity-50 text-white"
+          className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-gray-300 disabled:text-gray-500 text-white"
         >
           {isLoading ? (
             <>

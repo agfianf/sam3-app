@@ -1,5 +1,6 @@
 import Konva from 'konva'
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react'
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import toast from 'react-hot-toast'
 import { Circle, Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text, Transformer } from 'react-konva'
 import type { Annotation, Label, PolygonAnnotation, RectangleAnnotation, Tool } from '../types/annotations'
 
@@ -62,6 +63,28 @@ const Canvas = React.memo(function Canvas({
   const [isPanMode, setIsPanMode] = useState(false) // Space key hold-to-pan mode
 
   const SNAP_DISTANCE = 10 // pixels in original image coordinates
+
+  // Debug: Log when annotations prop changes
+  useEffect(() => {
+    console.log('[CANVAS] Annotations prop changed:', {
+      count: annotations.length,
+      annotations: annotations.map(a => ({ id: a.id, type: a.type, labelId: a.labelId, imageId: a.imageId }))
+    })
+  }, [annotations])
+
+  // Annotation appearance constants - adjust these to customize look
+  const ANNOTATION_FILL_OPACITY_SELECTED = 0.2  // Fill opacity when selected
+  const ANNOTATION_FILL_OPACITY_UNSELECTED = 0.4  // Fill opacity when not selected
+  const ANNOTATION_STROKE_OPACITY = 1  // Stroke/border opacity (always visible)
+  const ANNOTATION_STROKE_WIDTH = 3  // Stroke/border width in pixels
+
+  // Helper function to convert hex color to rgba with opacity
+  const hexToRgba = (hex: string, opacity: number): string => {
+    const r = parseInt(hex.slice(1, 3), 16)
+    const g = parseInt(hex.slice(3, 5), 16)
+    const b = parseInt(hex.slice(5, 7), 16)
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`
+  }
 
   // Get selected label color (default to orange if no label selected)
   const selectedLabelColor = selectedLabelId
@@ -163,10 +186,20 @@ const Canvas = React.memo(function Canvas({
     return (annotation: Annotation): boolean => {
       // Check annotation's own visibility (default to true if undefined)
       const annotationVisible = annotation.isVisible ?? true
-      if (!annotationVisible) return false
+      if (!annotationVisible) {
+        console.log('[VISIBILITY] Annotation hidden (isVisible=false):', annotation.id)
+        return false
+      }
 
       const label = labelMap.get(annotation.labelId)
-      if (!label) return false // Hide annotations with missing labels
+      if (!label) {
+        console.log('[VISIBILITY] Annotation hidden (label not found):', {
+          annotationId: annotation.id,
+          labelId: annotation.labelId,
+          availableLabels: Array.from(labelMap.keys())
+        })
+        return false
+      }
 
       return true
     }
@@ -258,12 +291,19 @@ const Canvas = React.memo(function Canvas({
     if (selectedTool === 'rectangle') {
       if (!rectangleStartPoint) {
         // First click: Set the start point
+        console.log('[CANVAS] Rectangle start point set:', { x: originalX, y: originalY })
         setRectangleStartPoint({ x: originalX, y: originalY })
         setCurrentRectangle([originalX, originalY, 0, 0])
       } else {
         // Second click: Create the rectangle
         const width = originalX - rectangleStartPoint.x
         const height = originalY - rectangleStartPoint.y
+        console.log('[CANVAS] Rectangle completed:', {
+          start: rectangleStartPoint,
+          end: { x: originalX, y: originalY },
+          width,
+          height
+        })
 
         if (Math.abs(width) > 5 && Math.abs(height) > 5) {
           // Normalize rectangle (handle negative width/height)
@@ -280,7 +320,11 @@ const Canvas = React.memo(function Canvas({
             width: normalizedWidth,
             height: normalizedHeight,
           }
+          console.log('[CANVAS] Calling onAddAnnotation with rectangle:', newAnnotation)
           onAddAnnotation(newAnnotation)
+        } else {
+          console.log('[CANVAS] Rectangle too small, not creating annotation:', { width: Math.abs(width), height: Math.abs(height) })
+          toast.error('Rectangle too small (minimum 5x5 pixels)')
         }
 
         // Reset rectangle state
@@ -684,8 +728,16 @@ const Canvas = React.memo(function Canvas({
 
   // Memoize visible annotations to prevent unnecessary re-renders
   const visibleAnnotations = useMemo(() => {
-    console.log('[RENDER] Filtering annotations')
-    return annotations.filter(isAnnotationVisible)
+    console.log('[RENDER] Filtering annotations:', {
+      totalAnnotations: annotations.length,
+      annotationIds: annotations.map(a => ({ id: a.id, type: a.type, labelId: a.labelId }))
+    })
+    const visible = annotations.filter(isAnnotationVisible)
+    console.log('[RENDER] Visible annotations:', {
+      visibleCount: visible.length,
+      hiddenCount: annotations.length - visible.length
+    })
+    return visible
   }, [annotations, isAnnotationVisible])
 
   if (!image) {
@@ -763,15 +815,18 @@ const Canvas = React.memo(function Canvas({
                     width={rect.width * scale}
                     height={rect.height * scale}
                     stroke={color}
-                    strokeWidth={2}
+                    strokeWidth={ANNOTATION_STROKE_WIDTH}
                     strokeScaleEnabled={false}
-                    fill={`${color}33`}
+                    strokeOpacity={ANNOTATION_STROKE_OPACITY}
+                    fill={hexToRgba(
+                      color,
+                      isSelected ? ANNOTATION_FILL_OPACITY_SELECTED : ANNOTATION_FILL_OPACITY_UNSELECTED
+                    )}
                     onClick={() => onSelectAnnotation(annotation.id)}
                     onTap={() => onSelectAnnotation(annotation.id)}
                     draggable={selectedTool === 'select'}
                     onDragEnd={(e) => handleDragEnd(annotation, e)}
                     onTransformEnd={(e) => handleTransformEnd(annotation, e)}
-                    opacity={isSelected ? 1 : 0.7}
                   />
                   {/* Label text above rectangle */}
                   <Text
@@ -812,9 +867,13 @@ const Canvas = React.memo(function Canvas({
                     key={`poly-${annotation.id}`}
                     points={points}
                     stroke={color}
-                    strokeWidth={2}
+                    strokeWidth={ANNOTATION_STROKE_WIDTH}
                     strokeScaleEnabled={false}
-                    fill={`${color}33`}
+                    strokeOpacity={ANNOTATION_STROKE_OPACITY}
+                    fill={hexToRgba(
+                      color,
+                      isSelected ? ANNOTATION_FILL_OPACITY_SELECTED : ANNOTATION_FILL_OPACITY_UNSELECTED
+                    )}
                     closed
                     onClick={(e) => {
                       if (isCtrlPressed && isSelected) {
@@ -824,7 +883,6 @@ const Canvas = React.memo(function Canvas({
                       }
                     }}
                     onTap={() => onSelectAnnotation(annotation.id)}
-                    opacity={isSelected ? 1 : 0.7}
                   />
                   {/* Label text above polygon (use first point) */}
                   {displayPoints.length > 0 && (
@@ -948,7 +1006,9 @@ const Canvas = React.memo(function Canvas({
                 key="poly-lines"
                 points={polygonPoints.flatMap(p => [p.x * scale, p.y * scale])}
                 stroke={selectedLabelColor}
-                strokeWidth={2}
+                strokeWidth={ANNOTATION_STROKE_WIDTH}
+                strokeScaleEnabled={false}
+                strokeOpacity={ANNOTATION_STROKE_OPACITY}
                 dash={[5, 5]}
                 listening={false}
               />

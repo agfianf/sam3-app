@@ -97,3 +97,71 @@ button:disabled,
 button[disabled] {
   cursor: not-allowed;
 }
+
+/* Custom range slider styling with gradient */
+input[type="range"].slider-purple,
+input[type="range"].slider-blue {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 0.5rem;
+  border-radius: 0.5rem;
+  outline: none;
+}
+
+/* Purple slider for text prompts */
+input[type="range"].slider-purple::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 1.25rem;
+  width: 1.25rem;
+  border-radius: 50%;
+  background: rgb(126, 34, 206);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input[type="range"].slider-purple::-moz-range-thumb {
+  height: 1.25rem;
+  width: 1.25rem;
+  border-radius: 50%;
+  background: rgb(126, 34, 206);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input[type="range"].slider-purple::-moz-range-progress {
+  height: 0.5rem;
+  border-radius: 0.5rem;
+  background: rgb(147, 51, 234);
+}
+
+/* Blue slider for bbox prompts */
+input[type="range"].slider-blue::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 1.25rem;
+  width: 1.25rem;
+  border-radius: 50%;
+  background: rgb(29, 78, 216);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input[type="range"].slider-blue::-moz-range-thumb {
+  height: 1.25rem;
+  width: 1.25rem;
+  border-radius: 50%;
+  background: rgb(29, 78, 216);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+input[type="range"].slider-blue::-moz-range-progress {
+  height: 0.5rem;
+  border-radius: 0.5rem;
+  background: rgb(37, 99, 235);
+}

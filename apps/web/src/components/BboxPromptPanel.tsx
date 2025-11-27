@@ -345,7 +345,10 @@ export function BboxPromptPanel({
               step="0.05"
               value={threshold}
               onChange={(e) => setThreshold(parseFloat(e.target.value))}
-              className="w-full h-2 bg-white rounded-lg appearance-none cursor-pointer accent-blue-600"
+              className="w-full slider-blue"
+              style={{
+                background: `linear-gradient(to right, rgb(37, 99, 235) 0%, rgb(37, 99, 235) ${threshold * 100}%, rgb(209, 213, 219) ${threshold * 100}%, rgb(209, 213, 219) 100%)`
+              }}
               disabled={isLoading}
             />
             <p className="mt-1 text-xs text-gray-600">
@@ -365,7 +368,10 @@ export function BboxPromptPanel({
               step="0.05"
               value={maskThreshold}
               onChange={(e) => setMaskThreshold(parseFloat(e.target.value))}
-              className="w-full h-2 bg-white rounded-lg appearance-none cursor-pointer accent-blue-600"
+              className="w-full slider-blue"
+              style={{
+                background: `linear-gradient(to right, rgb(37, 99, 235) 0%, rgb(37, 99, 235) ${maskThreshold * 100}%, rgb(209, 213, 219) ${maskThreshold * 100}%, rgb(209, 213, 219) 100%)`
+              }}
               disabled={isLoading}
             />
             <p className="mt-1 text-xs text-gray-600">
@@ -381,7 +387,7 @@ export function BboxPromptPanel({
           type="button"
           onClick={handleSubmit}
           disabled={isLoading || promptBboxes.length === 0 || !currentImage || promptBboxes.some(bbox => !bbox.labelId)}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-white disabled:opacity-50"
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-gray-300 disabled:text-gray-500 text-white"
         >
           {isLoading ? (
             <>

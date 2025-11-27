@@ -240,8 +240,17 @@ function AnnotationApp() {
   }
 
   const handleAddAnnotation = async (annotation: Omit<Annotation, 'imageId' | 'labelId' | 'createdAt' | 'updatedAt'>) => {
+    console.log('[APP] handleAddAnnotation called:', {
+      type: annotation.type,
+      currentImageId,
+      selectedLabelId,
+      isBboxPromptMode,
+      annotation
+    })
+
     // If in bbox-prompt mode and it's a rectangle, add to promptBboxes instead
     if (isBboxPromptMode && annotation.type === 'rectangle') {
+      console.log('[APP] Bbox prompt mode: adding rectangle to promptBboxes')
       const rect = annotation as Omit<RectangleAnnotation, 'imageId' | 'labelId' | 'createdAt' | 'updatedAt'>
 
       // Use the currently selected label, or the first available label
@@ -258,10 +267,21 @@ function AnnotationApp() {
           labelId: labelIdToUse,
         }
       ])
+      toast('Rectangle added as prompt bbox', { icon: 'ℹ️' })
       return
     }
 
-    if (!currentImageId || !selectedLabelId) return
+    if (!currentImageId) {
+      console.log('[APP] Early return: no currentImageId')
+      toast.error('Please load an image first')
+      return
+    }
+
+    if (!selectedLabelId) {
+      console.log('[APP] Early return: no selectedLabelId')
+      toast.error('Please select a label before creating annotations')
+      return
+    }
 
     const now = Date.now()
     const fullAnnotation: Annotation = {
@@ -272,10 +292,32 @@ function AnnotationApp() {
       updatedAt: now,
     } as Annotation
 
-    await addAnnotation(fullAnnotation)
-    // Record history after user action (not during undo/redo)
-    if (!isUndoingRef.current) {
-      recordChange([...currentAnnotations, fullAnnotation])
+    try {
+      console.log('[APP] Adding annotation to storage:', fullAnnotation)
+      console.log('[APP] Current annotations before add:', {
+        count: currentAnnotations.length,
+        ids: currentAnnotations.map(a => a.id)
+      })
+      await addAnnotation(fullAnnotation)
+      console.log('[APP] Annotation successfully saved')
+
+      // Wait a bit and check if state updated
+      setTimeout(() => {
+        console.log('[APP] Current annotations after add (delayed check):', {
+          count: currentAnnotations.length,
+          ids: currentAnnotations.map(a => a.id)
+        })
+      }, 100)
+
+      toast.success('Annotation created')
+
+      // Record history after user action (not during undo/redo)
+      if (!isUndoingRef.current) {
+        recordChange([...currentAnnotations, fullAnnotation])
+      }
+    } catch (error) {
+      console.error('[APP] Failed to save annotation:', error)
+      toast.error('Failed to save annotation')
     }
   }
 
