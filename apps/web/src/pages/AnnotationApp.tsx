@@ -109,6 +109,13 @@ function AnnotationApp() {
   const [zoomLevel, setZoomLevel] = useState(1)
   const [stagePosition, setStagePosition] = useState({ x: 0, y: 0 })
 
+  // Clear bbox prompt mode when switching to manual annotation tools
+  useEffect(() => {
+    if (selectedTool === 'rectangle' || selectedTool === 'polygon' || selectedTool === 'select') {
+      setIsBboxPromptMode(false)
+    }
+  }, [selectedTool])
+
   const {
     images,
     labels,
@@ -1209,17 +1216,40 @@ function AnnotationApp() {
 
       {/* Toast Notifications */}
       <Toaster
-        position="top-right"
+        position="bottom-right"
         toastOptions={{
           duration: 3000,
           style: {
-            background: '#1f2937',
-            color: '#f2f2f2',
-            border: '1px solid #374151',
+            background: 'rgba(255, 255, 255, 0.25)', // White frosted glass with blue hint
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)', // Safari support
+            color: '#111827', // Dark text for readability on white
+            border: '1px solid rgba(59, 130, 246, 0.3)', // Blue border hint
+            boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.1)',
           },
           success: {
+            style: {
+              background: 'rgba(255, 255, 255, 0.25)', // White frosted glass
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(16, 185, 129, 0.3)', // Green border hint
+              color: '#111827', // Dark text
+            },
             iconTheme: {
-              primary: '#f97316',
+              primary: '#10b981', // Emerald-500
+              secondary: '#fff',
+            },
+          },
+          error: {
+            style: {
+              background: 'rgba(255, 255, 255, 0.25)', // White frosted glass
+              backdropFilter: 'blur(12px)',
+              WebkitBackdropFilter: 'blur(12px)',
+              border: '1px solid rgba(239, 68, 68, 0.3)', // Red border hint
+              color: '#111827', // Dark text
+            },
+            iconTheme: {
+              primary: '#ef4444', // Red-500
               secondary: '#fff',
             },
           },

@@ -77,7 +77,7 @@ const Canvas = React.memo(function Canvas({
   const ANNOTATION_FILL_OPACITY_SELECTED = 0.2  // Fill opacity when selected
   const ANNOTATION_FILL_OPACITY_UNSELECTED = 0.4  // Fill opacity when not selected
   const ANNOTATION_STROKE_OPACITY = 1  // Stroke/border opacity (always visible)
-  const ANNOTATION_STROKE_WIDTH = 3  // Stroke/border width in pixels
+  const ANNOTATION_STROKE_WIDTH = 2  // Stroke/border width in pixels
 
   // Helper function to convert hex color to rgba with opacity
   const hexToRgba = (hex: string, opacity: number): string => {
@@ -1017,7 +1017,21 @@ const Canvas = React.memo(function Canvas({
           {/* Polygon in progress */}
           {selectedTool === 'polygon' && polygonPoints.length > 0 && (
             <React.Fragment key="polygon-drawing">
-              {/* Lines connecting points */}
+              {/* Filled polygon preview including cursor position */}
+              {mousePosition && polygonPoints.length >= 2 && (
+                <Line
+                  key="poly-fill-preview"
+                  points={[
+                    ...polygonPoints.flatMap(p => [p.x * scale, p.y * scale]),
+                    isNearFirstPoint ? polygonPoints[0].x * scale : mousePosition.x * scale,
+                    isNearFirstPoint ? polygonPoints[0].y * scale : mousePosition.y * scale,
+                  ]}
+                  fill={hexToRgba(selectedLabelColor, ANNOTATION_FILL_OPACITY_UNSELECTED)}
+                  closed
+                  listening={false}
+                />
+              )}
+              {/* Lines connecting existing points (stroke only) */}
               <Line
                 key="poly-lines"
                 points={polygonPoints.flatMap(p => [p.x * scale, p.y * scale])}
@@ -1028,7 +1042,7 @@ const Canvas = React.memo(function Canvas({
                 dash={[5, 5]}
                 listening={false}
               />
-              {/* Line from last point to mouse position (preview) */}
+              {/* Line from last point to mouse position (preview stroke) */}
               {mousePosition && (
                 <Line
                   key="poly-preview-line"
@@ -1039,7 +1053,7 @@ const Canvas = React.memo(function Canvas({
                     isNearFirstPoint ? polygonPoints[0].y * scale : mousePosition.y * scale,
                   ]}
                   stroke={selectedLabelColor}
-                  strokeWidth={1}
+                  strokeWidth={ANNOTATION_STROKE_WIDTH}
                   dash={[3, 3]}
                   opacity={0.6}
                   listening={false}
@@ -1080,7 +1094,7 @@ const Canvas = React.memo(function Canvas({
               <Line
                 key="crosshair-vertical"
                 points={[mousePosition.x * scale, 0, mousePosition.x * scale, dimensions.height]}
-                stroke={selectedLabelColor}
+                stroke="white"
                 strokeWidth={1.5}
                 dash={[8, 4]}
                 opacity={0.8}
@@ -1090,7 +1104,7 @@ const Canvas = React.memo(function Canvas({
               <Line
                 key="crosshair-horizontal"
                 points={[0, mousePosition.y * scale, dimensions.width, mousePosition.y * scale]}
-                stroke={selectedLabelColor}
+                stroke="white"
                 strokeWidth={1.5}
                 dash={[8, 4]}
                 opacity={0.8}
