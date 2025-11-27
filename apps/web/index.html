@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <!-- React Grab - Development Only -->
+    <script type="module">
+      // STEP 1: Check if this script even runs
+      console.log("🔍 STEP 1: Script is executing");
+      console.log("🔍 import.meta:", import.meta);
+      console.log("🔍 import.meta.env:", import.meta.env);
+      console.log("🔍 import.meta.env.DEV:", import.meta.env.DEV);
+      console.log("🔍 import.meta.env.MODE:", import.meta.env.MODE);
+
+      // STEP 2: Try loading react-grab regardless of env
+      console.log("🔍 STEP 2: Attempting to import react-grab...");
+
+      import("react-grab")
+        .then((module) => {
+          console.log("✅ SUCCESS: react-grab imported");
+          console.log("✅ Module:", module);
+          console.log("✅ Module.default:", module.default);
+
+          // STEP 3: Check for API on window
+          setTimeout(() => {
+            console.log("🔍 STEP 3: Checking window objects...");
+            console.log("window.__REACT_GRAB__:", window.__REACT_GRAB__);
+            console.log("window.ReactGrab:", window.ReactGrab);
+
+            // List all window properties containing 'react' or 'grab'
+            const relevantProps = Object.keys(window).filter(key =>
+              key.toLowerCase().includes('react') || key.toLowerCase().includes('grab')
+            );
+            console.log("🔍 Relevant window properties:", relevantProps);
+
+            // STEP 4: Try to access API
+            const api = window.__REACT_GRAB__;
+            if (api) {
+              console.log("✅ API FOUND!");
+              console.log("API structure:", api);
+              console.log("API keys:", Object.keys(api));
+
+              // STEP 5: Check if API has methods
+              if (typeof api.init === 'function') {
+                console.log("✅ api.init is a function");
+              }
+              if (typeof api.activate === 'function') {
+                console.log("✅ api.activate is a function");
+              }
+              if (typeof api.copyElement === 'function') {
+                console.log("✅ api.copyElement is a function");
+              }
+            } else {
+              console.error("❌ NO API FOUND on window.__REACT_GRAB__");
+            }
+          }, 2000);
+        })
+        .catch((err) => {
+          console.error("❌ FAILED to import react-grab");
+          console.error("Error:", err);
+          console.error("Error message:", err.message);
+          console.error("Error stack:", err.stack);
+        });
+
+      console.log("🔍 Script finished (async operations may still be running)");
+    </script>
+
+    <!-- Favicons for cross-browser compatibility -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo.png" />
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="AnnotateAnu - AI-powered image annotation platform combining SAM3 segmentation with manual annotation tools. Free, open-source, and browser-based." />
+    <meta name="keywords" content="annotation, image annotation, SAM3, segmentation, AI, machine learning, computer vision, COCO, YOLO" />
+
+    <!-- Meta tags for social sharing (Open Graph) -->
+    <meta property="og:title" content="AnnotateANU - AI-Powered Annotation Platform" />
+    <meta property="og:description" content="AI-powered image annotation platform combining SAM3 segmentation with manual annotation tools. Free, open-source, and browser-based." />
+    <meta property="og:image" content="/logo.png" />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="AnnotateANU - AI-Powered Annotation Platform" />
+    <meta name="twitter:description" content="AI-powered image annotation platform with SAM3 integration" />
+    <meta name="twitter:image" content="/logo.png" />
+
+    <!-- Theme color matching emerald brand -->
+    <meta name="theme-color" content="#10b981" />
+
+    <title>AnnotateANU - AI-Powered Annotation Platform</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

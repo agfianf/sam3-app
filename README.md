@@ -26,10 +26,6 @@
 - [Features](#-features)
 - [Quick Start](#quick-start)
 - [Architecture](#architecture)
-- [Development Commands](#development-commands)
-- [API Documentation](#api-documentation)
-- [Tech Stack](#tech-stack)
-- [GPU Support](#gpu-support)
 - [Roadmap](#-roadmap---coming-soon)
 - [Troubleshooting](#troubleshooting)
 - [Contributing](#-contributing)
@@ -56,20 +52,22 @@
 
 ## Architecture
 
+AnnotateANU is a simple monorepo with two independent applications:
+
 ```
-sam3-app/
-├── backend/                 # FastAPI SAM3 inference API
-│   ├── src/app/
-│   ├── Dockerfile
-│   ├── pyproject.toml
-│   └── README.md
-├── frontend/                # React annotation platform
-│   ├── src/
-│   ├── Dockerfile
-│   ├── package.json
-│   └── README.md
-├── docker-compose.yml       # Orchestrates both services
+sam3-app/                    # Simple Monorepo
+├── apps/
+│   ├── web/                 # React annotation interface
+│   │   ├── src/
+│   │   ├── Dockerfile
+│   │   └── package.json
+│   └── api-inference/       # FastAPI SAM3 backend
+│       ├── src/app/
+│       ├── Dockerfile
+│       └── pyproject.toml
+├── docker-compose.yml       # Orchestrates all services
 ├── Makefile                 # Development commands
+├── package.json             # Root config
 └── README.md
 ```
 
@@ -89,11 +87,11 @@ SAM3 is a gated model. You must:
 1. Create account: https://huggingface.co/join
 2. Request access: https://huggingface.co/facebook/sam3
 3. Generate token: https://huggingface.co/settings/tokens
-4. Add to backend/.env:
+4. Add to apps/api-inference/.env:
 
 ```bash
-cp backend/.env.example backend/.env
-# Edit backend/.env and add:
+cp apps/api-inference/.env.example apps/api-inference/.env
+# Edit apps/api-inference/.env and add:
 HF_TOKEN=hf_your_token_here
 ```
 
@@ -101,8 +99,8 @@ HF_TOKEN=hf_your_token_here
 
 ```bash
 # 1. Setup environment
-cp backend/.env.example backend/.env
-# Edit backend/.env and add your HF_TOKEN
+cp apps/api-inference/.env.example apps/api-inference/.env
+# Edit apps/api-inference/.env and add your HF_TOKEN
 
 # 2. Start all services
 make docker-up
