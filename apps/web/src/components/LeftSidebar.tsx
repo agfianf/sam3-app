@@ -115,6 +115,8 @@ export function LeftSidebar({
   // const tools: { id: Tool; icon: React.ReactNode; label: string }[] = [...]
 
   const handleToolClick = (tool: ActiveTool) => {
+    // If clicking a different AI tool, switch to it (mutual exclusion)
+    // If clicking the same AI tool, deactivate it (toggle)
     const newActiveTool = activeTool === tool ? null : tool
     setActiveTool(newActiveTool)
 
@@ -128,9 +130,21 @@ export function LeftSidebar({
       onAIPanelActiveChange(newActiveTool !== null)
     }
 
+    // Clear bbox prompts when switching away from bbox-prompt
+    if (activeTool === 'bbox-prompt' && newActiveTool !== 'bbox-prompt') {
+      if (onPromptBboxesChange) {
+        onPromptBboxesChange([])
+      }
+    }
+
     // Auto-switch to rectangle tool when bbox-prompt is activated
     if (newActiveTool === 'bbox-prompt') {
       onToolChange('rectangle')
+    }
+
+    // Switch to select tool when text-prompt is activated (deactivate manual tools)
+    if (newActiveTool === 'text-prompt') {
+      onToolChange('select')
     }
   }
 
@@ -167,7 +181,14 @@ export function LeftSidebar({
           tooltipTitle="Rectangle"
           tooltipDescription="Click and drag to draw rectangular bounding boxes for object annotation"
           shortcut="R"
-          onClick={() => onToolChange('rectangle')}
+          onClick={() => {
+            // Close text-prompt panel when switching to rectangle
+            if (activeTool === 'text-prompt') {
+              setActiveTool(null)
+              if (onAIPanelActiveChange) onAIPanelActiveChange(false)
+            }
+            onToolChange('rectangle')
+          }}
           isActive={selectedTool === 'rectangle'}
           activeColor="emerald"
           showLabelSelector={true}
@@ -181,7 +202,16 @@ export function LeftSidebar({
           tooltipTitle="Polygon"
           tooltipDescription="Click multiple points to draw custom polygon shapes around objects"
           shortcut="P"
-          onClick={() => onToolChange('polygon')}
+          onClick={() => {
+            // Close any AI panel when switching to polygon
+            if (activeTool !== null) {
+              setActiveTool(null)
+              if (onAIPanelActiveChange) onAIPanelActiveChange(false)
+              if (onBboxPromptModeChange) onBboxPromptModeChange(false)
+              if (onPromptBboxesChange) onPromptBboxesChange([])
+            }
+            onToolChange('polygon')
+          }}
           isActive={selectedTool === 'polygon'}
           activeColor="emerald"
           showLabelSelector={true}
