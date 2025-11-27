@@ -114,6 +114,16 @@ function AnnotationApp() {
   const [showColorPicker, setShowColorPicker] = useState(false)
   const colorButtonRef = useRef<HTMLButtonElement>(null)
 
+  // Orphan recovery modal state
+  const [showOrphanRecoveryModal, setShowOrphanRecoveryModal] = useState(false)
+  const [orphanedAnnotations, setOrphanedAnnotations] = useState<Annotation[]>([])
+  const [orphanRecoveryTarget, setOrphanRecoveryTarget] = useState<string | null>(null)
+
+  // Label deletion confirmation modal state
+  const [showLabelDeleteModal, setShowLabelDeleteModal] = useState(false)
+  const [labelToDelete, setLabelToDelete] = useState<{ id: string; name: string; count: number } | null>(null)
+  const [deleteReassignTarget, setDeleteReassignTarget] = useState<string | null>(null)
+
   // Zoom and pan state
   const [zoomLevel, setZoomLevel] = useState(1)
   const [stagePosition, setStagePosition] = useState({ x: 0, y: 0 })
@@ -158,6 +168,18 @@ function AnnotationApp() {
   useEffect(() => {
     localStorage.setItem('promptMode', promptMode)
   }, [promptMode])
+
+  // Detect orphaned annotations on load
+  useEffect(() => {
+    if (!loading) {
+      const orphans = annotations.filter(ann => !labels.some(l => l.id === ann.labelId))
+      if (orphans.length > 0 && labels.length > 0 && !showOrphanRecoveryModal) {
+        setOrphanedAnnotations(orphans)
+        setShowOrphanRecoveryModal(true)
+        setOrphanRecoveryTarget(labels[0].id) // Default to first label
+      }
+    }
+  }, [annotations, labels, loading, showOrphanRecoveryModal])
 
   const handleImageUpload = async (files: FileList) => {
     const filesArray = Array.from(files)
@@ -1057,6 +1079,11 @@ function AnnotationApp() {
                     />
                     <span className="flex-1 text-sm text-gray-900 truncate">{label.name}</span>
 
+                    {/* Annotation count badge */}
+                    <span className="text-xs text-gray-600 bg-gray-100 px-2 py-0.5 rounded">
+                      {annotations.filter(a => a.labelId === label.id).length}
+                    </span>
+
                     {/* Edit Button */}
                     <button
                       onClick={() => {
@@ -1073,9 +1100,32 @@ function AnnotationApp() {
 
                     {/* Delete Button */}
                     <button
-                      onClick={() => removeLabel(label.id)}
-                      className="p-1 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                      title="Delete label"
+                      onClick={async () => {
+                        // Check if label has annotations
+                        const count = annotations.filter(a => a.labelId === label.id).length
+
+                        if (count > 0) {
+                          // Show confirmation dialog
+                          setLabelToDelete({ id: label.id, name: label.name, count })
+
+                          // Set default reassign target (first other label)
+                          const otherLabel = labels.find(l => l.id !== label.id)
+                          setDeleteReassignTarget(otherLabel?.id || null)
+
+                          setShowLabelDeleteModal(true)
+                        } else {
+                          // Safe to delete directly
+                          await removeLabel(label.id)
+                          toast.success('Label deleted')
+                        }
+                      }}
+                      disabled={labels.length === 1 && annotations.length > 0}
+                      className="p-1 text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      title={
+                        labels.length === 1 && annotations.length > 0
+                          ? "Cannot delete last label with annotations"
+                          : "Delete label"
+                      }
                     >
                       <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -1206,6 +1256,205 @@ function AnnotationApp() {
           </div>
         </div>
       )}
+
+      {/* Orphan Recovery Modal */}
+      <Modal
+        isOpen={showOrphanRecoveryModal}
+        onClose={() => {}}
+        title="Orphaned Annotations Detected"
+        blocking={true}
+        showCloseButton={false}
+        maxWidth="lg"
+      >
+        <div className="space-y-4">
+          <div className="bg-amber-50/80 border border-amber-200 rounded-lg p-4">
+            <p className="text-amber-800 font-medium">
+              ⚠️ Found {orphanedAnnotations.length} annotation(s) with deleted labels
+            </p>
+          </div>
+
+          <p className="text-gray-800">
+            These annotations were created with labels that no longer exist.
+            You can reassign them to an existing label or delete them permanently.
+          </p>
+
+          <div className="bg-white/50 rounded-lg p-4 space-y-3">
+            <label className="block">
+              <span className="text-sm font-medium text-gray-700 mb-2 block">
+                Reassign to label:
+              </span>
+              <select
+                value={orphanRecoveryTarget || ''}
+                onChange={(e) => setOrphanRecoveryTarget(e.target.value)}
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:border-emerald-500 focus:outline-none"
+              >
+                {labels.map(label => (
+                  <option key={label.id} value={label.id}>
+                    {label.name} ({annotations.filter(a => a.labelId === label.id).length} existing)
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="text-xs text-gray-600 bg-blue-50/50 p-2 rounded">
+              💡 Tip: You can reorganize these annotations later using the label manager
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200/50">
+            <button
+              onClick={async () => {
+                // Delete orphaned annotations
+                await removeManyAnnotations(orphanedAnnotations.map(a => a.id))
+                setShowOrphanRecoveryModal(false)
+                toast.success(`Deleted ${orphanedAnnotations.length} orphaned annotation(s)`)
+                setOrphanedAnnotations([])
+              }}
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
+            >
+              Delete Orphans
+            </button>
+            <button
+              onClick={async () => {
+                if (orphanRecoveryTarget) {
+                  // Reassign all orphaned annotations to selected label
+                  await annotationStorage.bulkChangeLabel(
+                    orphanedAnnotations.map(a => a.id),
+                    orphanRecoveryTarget
+                  )
+                  // Reload to reflect changes
+                  window.location.reload()
+                }
+              }}
+              disabled={!orphanRecoveryTarget}
+              className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded transition-colors"
+            >
+              Reassign Annotations
+            </button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Label Deletion Confirmation Modal */}
+      <Modal
+        isOpen={showLabelDeleteModal}
+        onClose={() => {
+          setShowLabelDeleteModal(false)
+          setLabelToDelete(null)
+          setDeleteReassignTarget(null)
+        }}
+        title="Delete Label with Annotations"
+        maxWidth="lg"
+      >
+        <div className="space-y-4">
+          <div className="bg-amber-50/80 border border-amber-200 rounded-lg p-4">
+            <p className="text-amber-800 font-medium">
+              ⚠️ Label "{labelToDelete?.name}" has {labelToDelete?.count} annotation(s)
+            </p>
+          </div>
+
+          <p className="text-gray-800">
+            Choose what to do with the annotations before deleting this label:
+          </p>
+
+          <div className="space-y-3">
+            {/* Reassign Option (Recommended) */}
+            {labels.filter(l => l.id !== labelToDelete?.id).length > 0 && (
+              <div className="bg-emerald-50/50 border border-emerald-200 rounded-lg p-4 space-y-3">
+                <div className="flex items-start gap-2">
+                  <span className="text-emerald-600 font-medium text-sm">✓ Recommended</span>
+                </div>
+                <label className="block">
+                  <span className="text-sm font-medium text-gray-700 mb-2 block">
+                    Reassign annotations to:
+                  </span>
+                  <select
+                    value={deleteReassignTarget || ''}
+                    onChange={(e) => setDeleteReassignTarget(e.target.value)}
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-md focus:border-emerald-500 focus:outline-none"
+                  >
+                    {labels
+                      .filter(l => l.id !== labelToDelete?.id)
+                      .map(label => (
+                        <option key={label.id} value={label.id}>
+                          {label.name}
+                        </option>
+                      ))}
+                  </select>
+                </label>
+              </div>
+            )}
+
+            {/* Cascade Delete Option */}
+            <div className="bg-red-50/50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-700 text-sm font-medium">
+                ⚠️ Or delete label and all {labelToDelete?.count} annotation(s)
+              </p>
+              <p className="text-red-600 text-xs mt-1">
+                This action cannot be undone
+              </p>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-gray-200/50">
+            <button
+              onClick={() => {
+                setShowLabelDeleteModal(false)
+                setLabelToDelete(null)
+                setDeleteReassignTarget(null)
+              }}
+              className="px-4 py-2 glass hover:glass-strong text-gray-900 rounded transition-colors border border-gray-300"
+            >
+              Cancel
+            </button>
+
+            {/* Cascade Delete Button */}
+            <button
+              onClick={async () => {
+                if (!labelToDelete) return
+
+                // Delete all annotations with this label
+                const annotationsToDelete = annotations
+                  .filter(a => a.labelId === labelToDelete.id)
+                  .map(a => a.id)
+
+                await removeManyAnnotations(annotationsToDelete)
+                await removeLabel(labelToDelete.id)
+
+                setShowLabelDeleteModal(false)
+                toast.success(`Deleted label and ${annotationsToDelete.length} annotation(s)`)
+                setLabelToDelete(null)
+              }}
+              className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded transition-colors"
+            >
+              Delete All
+            </button>
+
+            {/* Reassign Button (only show if other labels exist) */}
+            {deleteReassignTarget && (
+              <button
+                onClick={async () => {
+                  if (!labelToDelete || !deleteReassignTarget) return
+
+                  // Reassign annotations to target label
+                  const annotationsToReassign = annotations
+                    .filter(a => a.labelId === labelToDelete.id)
+                    .map(a => a.id)
+
+                  await annotationStorage.bulkChangeLabel(annotationsToReassign, deleteReassignTarget)
+                  await removeLabel(labelToDelete.id)
+
+                  // Reload to reflect changes
+                  window.location.reload()
+                }}
+                className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded transition-colors"
+              >
+                Reassign & Delete
+              </button>
+            )}
+          </div>
+        </div>
+      </Modal>
 
       {/* Blocking Popup: No Labels */}
       {!loading && images.length > 0 && labels.length === 0 && !showLabelManager && (
