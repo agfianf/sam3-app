@@ -1,5 +1,27 @@
 import axios from 'axios'
-import type { SAM3Response } from '@sam3/shared-types'
+
+// SAM3 API Response Types (inlined from shared-types)
+interface MaskPolygon {
+  polygons: Array<Array<[number, number]>>
+  area: number
+}
+
+interface InferenceResult {
+  num_objects: number
+  boxes: Array<[number, number, number, number]>
+  scores: number[]
+  masks: MaskPolygon[]
+  processing_time_ms: number
+  visualization_base64?: string
+}
+
+interface APIResponse<T> {
+  data: T
+  message: string
+  status_code: number
+}
+
+export type SAM3Response = APIResponse<InferenceResult>
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 

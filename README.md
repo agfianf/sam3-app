@@ -52,10 +52,10 @@
 
 ## Architecture
 
-AnnotateANU is a **Turborepo monorepo** with shared TypeScript types and optimized build caching:
+AnnotateANU is a simple monorepo with two independent applications:
 
 ```
-sam3-app/                    # Turborepo Monorepo
+sam3-app/                    # Simple Monorepo
 ├── apps/
 │   ├── web/                 # React annotation interface
 │   │   ├── src/
@@ -65,14 +65,9 @@ sam3-app/                    # Turborepo Monorepo
 │       ├── src/app/
 │       ├── Dockerfile
 │       └── pyproject.toml
-├── packages/
-│   ├── shared-types/        # Shared TypeScript API types
-│   │   └── src/
-│   └── tsconfig/            # Shared TypeScript configs
-├── turbo.json               # Turborepo pipeline config
-├── package.json             # Root workspace config
 ├── docker-compose.yml       # Orchestrates all services
 ├── Makefile                 # Development commands
+├── package.json             # Root config
 └── README.md
 ```
 

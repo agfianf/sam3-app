@@ -2,17 +2,11 @@
         backend-install backend-run backend-test backend-format backend-lint \
         frontend-install frontend-dev frontend-build \
         docker-up docker-down docker-logs docker-build docker-restart docker-shell \
-        docker-up-solo docker-down-solo docker-up-team docker-down-team \
-        turbo-dev turbo-build turbo-lint
+        docker-up-solo docker-down-solo docker-up-team docker-down-team
 
 help:
-	@echo "SAM3 Annotation Platform - Turborepo Monorepo"
-	@echo "=============================================="
-	@echo ""
-	@echo "Turborepo Commands (Recommended):"
-	@echo "  turbo-dev        - Run all apps in dev mode with Turbo"
-	@echo "  turbo-build      - Build all apps with Turbo caching"
-	@echo "  turbo-lint       - Lint all apps"
+	@echo "SAM3 Annotation Platform - Monorepo"
+	@echo "===================================="
 	@echo ""
 	@echo "Development:"
 	@echo "  dev              - Start both backend and frontend in development mode"
@@ -43,19 +37,6 @@ help:
 	@echo "  docker-restart   - Restart services (usage: make docker-restart service=backend|frontend)"
 	@echo "  docker-shell     - Open shell in container (usage: make docker-shell service=backend|frontend)"
 
-# Turborepo commands
-turbo-dev:
-	@echo "Starting all apps with Turborepo..."
-	npm run dev
-
-turbo-build:
-	@echo "Building all apps with Turborepo..."
-	npm run build
-
-turbo-lint:
-	@echo "Linting all apps with Turborepo..."
-	npm run lint
-
 # Development
 dev:
 	@echo "Starting development environment..."
@@ -63,10 +44,10 @@ dev:
 	docker-compose up
 
 install:
-	@echo "Installing root dependencies..."
-	npm install
-	@echo "Installing workspace dependencies..."
-	npm install --workspaces
+	@echo "Installing frontend dependencies..."
+	@cd apps/web && npm install
+	@echo "Installing backend dependencies..."
+	@cd apps/api-inference && uv sync
 	@echo "✓ All dependencies installed"
 
 clean:
@@ -78,10 +59,6 @@ clean:
 	@cd apps/api-inference && find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
 	@echo "Cleaning frontend..."
 	@cd apps/web && rm -rf dist .vite 2>/dev/null || true
-	@echo "Cleaning packages..."
-	@cd packages/shared-types && rm -rf dist 2>/dev/null || true
-	@echo "Cleaning root..."
-	@rm -rf node_modules 2>/dev/null || true
 	@echo "✓ Cleanup complete"
 
 # Backend commands

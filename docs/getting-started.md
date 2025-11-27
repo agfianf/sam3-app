@@ -1,15 +1,13 @@
 # Getting Started with AnnotateANU
 
-Complete guide to understanding and running AnnotateANU v2.0 with Turborepo.
+Complete guide to running AnnotateANU - a simple monorepo with FastAPI backend and React frontend.
 
 ---
 
 ## 📚 Table of Contents
 
 - [Quick Start](#-quick-start)
-- [Understanding Turborepo](#-understanding-turborepo)
 - [How to Run the Project](#-how-to-run-the-project)
-- [What Happened to Makefile?](#-what-happened-to-makefile)
 - [Complete Command Reference](#-complete-command-reference)
 - [Development Workflows](#-development-workflows)
 - [Troubleshooting](#-troubleshooting)
@@ -31,715 +29,278 @@ make backend-run          # Terminal 1 - Backend API
 cd apps/web && npm run dev  # Terminal 2 - Frontend
 ```
 
-**That's it!** You can start developing without learning Turborepo. Everything still works the same way!
+**That's it!** Docker handles orchestration. Makefile provides simple commands for common tasks.
 
 ---
 
-## 🤔 Understanding Turborepo
+## 🎯 How to Run the Project
 
-### What is Turborepo?
+### Method 1: Docker Compose (Recommended) 🐳
 
-**Turborepo is a build system for monorepos.** Think of it as a **smart task runner** that:
-
-1. ✅ **Runs tasks in parallel** - Can build/test multiple packages at the same time
-2. 🚀 **Caches results** - If nothing changed, it skips rebuilding (30-70% faster)
-3. 📦 **Manages dependencies** - Knows which packages depend on each other
-4. 🎯 **Orchestrates workspaces** - Runs commands across all apps/packages
-
-### Why We're Using It?
-
-#### Before Turborepo (Old Structure)
-
-```
-sam3-app/
-├── backend/    # Python - independent
-├── frontend/   # React - independent
-```
-
-**Problems:**
-- Frontend and backend were completely separate
-- No code sharing between them
-- TypeScript types duplicated in frontend
-- Had to run commands separately
-- Hard to add new services
-
-#### After Turborepo (New Structure)
-
-```
-sam3-app/
-├── apps/
-│   ├── web/              # React app
-│   └── api-inference/    # Python API
-├── packages/
-│   ├── shared-types/     # Shared TypeScript types ⭐
-│   └── tsconfig/         # Shared configs ⭐
-```
-
-**Benefits:**
-- ✅ **Frontend and backend share TypeScript types** (no duplication!)
-- ✅ **Turborepo builds shared-types first, then web** (automatic dependency order)
-- ✅ **30-70% faster builds** with caching
-- ✅ **Type-safe API contracts** between frontend and backend
-- ✅ **Ready to add more services** (api-core, workers, etc.)
-- ✅ **Better developer experience** with parallel builds
-
-### Real Example: The Shared Types Benefit
-
-**Before** (Duplicated types):
-```typescript
-// backend/schemas/sam3.py
-class SAM3Response:
-    num_objects: int
-    boxes: List[List[float]]
-    scores: List[float]
-
-// frontend/src/types/annotations.ts
-interface SAM3Response {
-  num_objects: number
-  boxes: number[][]
-  scores: number[]
-}
-// ❌ If backend changes, frontend breaks silently!
-```
-
-**After** (Shared types):
-```typescript
-// packages/shared-types/src/index.ts
-export interface SAM3Response {
-  num_objects: number
-  boxes: number[][]
-  scores: number[]
-}
-
-// apps/web/src/lib/sam3-client.ts
-import type { SAM3Response } from '@sam3/shared-types'
-// ✅ Single source of truth!
-// ✅ TypeScript catches breaking changes immediately!
-```
-
----
-
-## 🏃 How to Run the Project?
-
-You have **3 ways** to run AnnotateANU. Choose what works best for you:
-
-### Method 1: Docker (Recommended - Easiest) 🐳
-
-This is **exactly the same as before!** Nothing changed for Docker users.
+**Best for:** Most development scenarios, especially if you want both services running together.
 
 ```bash
-# Development mode (hot-reload enabled)
 make docker-up
-
-# View logs
-make docker-logs
-
-# Stop services
-make docker-down
 ```
 
 **What happens:**
-- Backend runs on http://localhost:8000
-- Frontend runs on http://localhost:5173
-- Turborepo is NOT involved - Docker handles everything
-- Hot-reload works for both frontend and backend
+1. Docker builds both backend and frontend containers
+2. Backend starts at http://localhost:8000
+3. Frontend starts at http://localhost:5173
+4. Both services can communicate via Docker network
 
-**When to use:**
-- ✅ First time setup
-- ✅ You want everything to "just work"
-- ✅ You want GPU acceleration (nvidia-docker)
-- ✅ You don't want to install Python/Node locally
+**Key points:**
+- Docker handles everything
+- Hot-reload enabled for both services
+- Clean isolated environment
+
+**View logs:**
+```bash
+make docker-logs                    # All services
+make docker-logs service=backend    # Just backend
+make docker-logs service=frontend   # Just frontend
+```
+
+**Stop services:**
+```bash
+make docker-down
+```
 
 ---
 
-### Method 2: Turborepo Commands (For Multiple Apps) ⚡
+### Method 2: Local Development (For Individual Services) 💻
 
-Use this when you want to run **multiple packages/apps** together locally (without Docker).
+**Best for:** When you want to run just one service locally, or prefer local development tools.
+
+#### Backend Only
 
 ```bash
-# 1. Install all dependencies (run once)
-npm install
-
-# 2. Build all packages (shared-types, then web)
-npm run build
-
-# 3. Run development mode for all packages
-npm run dev
-
-# 4. Lint all TypeScript packages
-npm run lint
-
-# 5. Run tests across all packages
-npm run test
-```
-
-**What happens when you run `npm run build`:**
-```
-npm run build
-      ↓
-Turborepo starts
-      ↓
-1. ✅ Builds packages/shared-types/ (TypeScript → JavaScript)
-2. ✅ Builds apps/web/ (uses compiled shared-types)
-3. ⏭️  Skips apps/api-inference/ (Python, no JS build needed)
-      ↓
-Result: All TypeScript packages built in dependency order
-```
-
-**Second build is cached:**
-```bash
-npm run build
-# 🚀 FULL TURBO - Everything cached!
-# Completed in 0.2s (was 8s before)
-```
-
-**When to use:**
-- ✅ You're working on shared-types + web together
-- ✅ You want to see Turborepo's speed benefits
-- ✅ You're preparing for production build
-- ✅ You're running CI/CD pipelines
-
----
-
-### Method 3: Individual Commands (Same as Before!) 🛠️
-
-Run each service individually - **this still works exactly as before!**
-
-**Terminal 1 - Backend:**
-```bash
-make backend-run
-# or manually:
 cd apps/api-inference
-uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+cp .env.example .env         # Add your HF_TOKEN
+make backend-install         # Install dependencies (run from root)
+make backend-run             # Run backend (run from root)
 ```
 
-**Terminal 2 - Frontend:**
+Backend runs at http://localhost:8000
+
+#### Frontend Only
+
 ```bash
-make frontend-dev
-# or manually:
 cd apps/web
+npm install
 npm run dev
 ```
 
-**Terminal 3 - Shared Types (watch mode):**
-```bash
-cd packages/shared-types
-npm run dev  # TypeScript compiler in watch mode
-```
-
-**When to use:**
-- ✅ You're only working on frontend OR backend
-- ✅ You want fine-grained control
-- ✅ You're debugging a specific service
-- ✅ You prefer traditional development workflow
-
----
-
-## 📋 What Happened to Makefile?
-
-**The Makefile is still there and works exactly the same!** We just **added** new commands.
-
-### Original Commands (Still Work ✅)
-
-All these commands work **exactly as before:**
-
-| Command | What It Does | Status |
-|---------|--------------|--------|
-| `make docker-up` | Start Docker dev environment | ✅ Same |
-| `make docker-down` | Stop Docker services | ✅ Same |
-| `make backend-run` | Run backend locally | ✅ Same |
-| `make backend-test` | Run backend tests | ✅ Same |
-| `make backend-lint` | Lint backend code | ✅ Same |
-| `make frontend-dev` | Run frontend dev server | ✅ Same |
-| `make frontend-build` | Build frontend for production | ✅ Same |
-| `make install` | Install all dependencies | ✅ Enhanced |
-| `make clean` | Clean cache and build files | ✅ Enhanced |
-
-### New Commands Added 🆕
-
-| Command | What It Does | When to Use |
-|---------|--------------|-------------|
-| `make docker-up-solo` | Start SOLO mode (minimal) | Local-first deployment |
-| `make docker-up-team` | Start TEAM mode (full stack) | Collaborative features |
-| `make turbo-build` | Build all packages with Turborepo | Production builds |
-| `make turbo-dev` | Run all packages in dev mode | Multi-package development |
-| `make turbo-lint` | Lint all TypeScript packages | Code quality checks |
-
-**Summary: Nothing was removed, only added!** Your existing workflow continues to work.
+Frontend runs at http://localhost:5173
 
 ---
 
 ## 📖 Complete Command Reference
 
-### Development Commands
+### Docker Commands
 
-```bash
-# Docker-based development (Recommended)
-make docker-up              # Start dev environment (hot-reload)
-make docker-down            # Stop services
-make docker-logs            # View all logs
-make docker-logs service=backend   # View specific service logs
-make docker-build           # Rebuild Docker images
-make docker-restart         # Restart all services
-make docker-shell service=backend  # Open shell in container
+| Command | Description | When to use |
+|---------|-------------|-------------|
+| `make docker-up` | Start all services | Daily development |
+| `make docker-down` | Stop all services | End of work session |
+| `make docker-build` | Rebuild images | After Dockerfile changes |
+| `make docker-logs` | View all logs | Debugging |
+| `make docker-logs service=backend` | View backend logs | Backend debugging |
+| `make docker-restart service=backend` | Restart backend | After config changes |
+| `make docker-shell service=backend` | Open shell in container | Inspect container |
 
-# Local development (without Docker)
-make backend-run            # Run backend on http://localhost:8000
-make frontend-dev           # Run frontend on http://localhost:5173
+### Backend Commands
 
-# Dependencies
-make install                # Install all dependencies
-make backend-install        # Install backend dependencies (Python/uv)
-make frontend-install       # Install frontend dependencies (npm)
+| Command | Description | When to use |
+|---------|-------------|-------------|
+| `make backend-install` | Install Python dependencies | After git pull |
+| `make backend-run` | Run FastAPI locally | Local development |
+| `make backend-test` | Run pytest | Testing |
+| `make backend-lint` | Lint Python code | Code quality |
+| `make backend-format` | Format Python code | Before commit |
 
-# Cleanup
-make clean                  # Clean all cache and build files
-```
+### Frontend Commands
 
-### Turborepo Commands
+| Command | Description | When to use |
+|---------|-------------|-------------|
+| `make frontend-install` | Install npm dependencies | After git pull |
+| `make frontend-dev` | Run Vite dev server | Local development |
+| `make frontend-build` | Build for production | Production builds |
 
-```bash
-# Build & Development
-npm run build              # Build all packages with caching
-npm run dev                # Run all packages in development mode
-npm run lint               # Lint all TypeScript packages
-npm run test               # Run all tests
-npm run clean              # Clean build artifacts
+### General Commands
 
-# Or via Makefile
-make turbo-build           # Same as npm run build
-make turbo-dev             # Same as npm run dev
-make turbo-lint            # Same as npm run lint
-```
-
-### Deployment Modes
-
-```bash
-# SOLO Mode (Minimal - Local-first)
-make docker-up-solo        # Start SOLO mode
-make docker-down-solo      # Stop SOLO mode
-# Services: Backend (8000), Frontend (3000)
-# Storage: IndexedDB only
-# Auth: Disabled
-
-# TEAM Mode (Full Stack - Collaborative)
-make docker-up-team        # Start TEAM mode
-make docker-down-team      # Stop TEAM mode
-# Services: Traefik, Backend, Frontend, PostgreSQL, MinIO, Redis, Workers
-# Storage: PostgreSQL + MinIO
-# Auth: Enabled
-```
-
-### Package-Specific Commands
-
-```bash
-# Shared Types
-cd packages/shared-types
-npm run build              # Compile TypeScript
-npm run dev                # Watch mode (recompile on change)
-npm run clean              # Remove dist/
-npm run lint               # Type check
-
-# Web App
-cd apps/web
-npm run dev                # Vite dev server (port 5173)
-npm run build              # Production build
-npm run lint               # ESLint check
-npm run preview            # Preview production build
-
-# API Inference (Backend)
-cd apps/api-inference
-uv run uvicorn app.main:app --reload  # Development server
-uv run pytest src/tests/   # Run tests
-uv run ruff check src/     # Lint
-uv run ruff format src/    # Format code
-```
+| Command | Description |
+|---------|-------------|
+| `make help` | Show all available commands |
+| `make install` | Install all dependencies (backend + frontend) |
+| `make clean` | Clean cache and build files |
 
 ---
 
-## 💼 Development Workflows
+## 🔄 Development Workflows
 
-### Workflow 1: Quick Development Session (Docker)
-
-**Best for:** Daily development, quick iterations
+### Daily Development
 
 ```bash
-# 1. Start everything
+# Start your day
 make docker-up
 
-# 2. Edit code
-# - Frontend: apps/web/src/
-# - Backend: apps/api-inference/src/
-# Changes auto-reload! ✨
+# Work on code...
+# (Changes auto-reload)
 
-# 3. View logs if needed
-make docker-logs
-
-# 4. Stop when done
+# End of day
 make docker-down
 ```
 
-**Pros:**
-- ✅ Fastest to get started
-- ✅ Everything configured correctly
-- ✅ GPU acceleration works
-- ✅ No dependency issues
-
----
-
-### Workflow 2: Frontend Development (Local)
-
-**Best for:** Working only on frontend, faster iteration
+### After Pulling Changes
 
 ```bash
-# Terminal 1 - Backend (Docker or local)
-make docker-up  # or make backend-run
+# If package.json or pyproject.toml changed
+make install
 
-# Terminal 2 - Frontend (local)
+# Rebuild Docker images if Dockerfiles changed
+make docker-build
+make docker-up
+```
+
+### Backend Development
+
+```bash
+# Make changes to Python code
+make backend-format    # Format code
+make backend-lint      # Check for issues
+make backend-test      # Run tests
+
+# Restart backend to see changes (if using Docker)
+make docker-restart service=backend
+```
+
+### Frontend Development
+
+```bash
 cd apps/web
-npm run dev
 
-# Terminal 3 - Shared types (watch mode)
-cd packages/shared-types
-npm run dev
+# Make changes to React code
+npm run lint          # Check for issues
+npm run build         # Test production build
 
-# Edit code in apps/web/src/
-# Changes reflected immediately in browser
+# Changes auto-reload in dev mode
 ```
-
-**Pros:**
-- ✅ Faster frontend hot-reload
-- ✅ Better TypeScript IDE support
-- ✅ Can use browser DevTools
-
----
-
-### Workflow 3: Working with Shared Types
-
-**Best for:** Changing API contracts, updating types
-
-```bash
-# 1. Edit shared types
-vim packages/shared-types/src/index.ts
-
-# 2. Rebuild shared types
-cd packages/shared-types
-npm run build
-
-# 3. Frontend will automatically pick up changes
-cd apps/web
-npm run dev
-
-# TypeScript will immediately show errors if types don't match!
-```
-
-**Pros:**
-- ✅ Type safety between frontend and backend
-- ✅ Catch breaking changes immediately
-- ✅ IDE autocomplete works
-
----
-
-### Workflow 4: Full Stack Development
-
-**Best for:** Working on features that touch both frontend and backend
-
-```bash
-# Terminal 1 - Backend
-make backend-run
-
-# Terminal 2 - Frontend
-cd apps/web && npm run dev
-
-# Terminal 3 - Shared types (watch)
-cd packages/shared-types && npm run dev
-
-# Edit any code, everything reloads automatically
-```
-
----
-
-### Workflow 5: Production Build & Testing
-
-**Best for:** Preparing for deployment, CI/CD
-
-```bash
-# 1. Clean everything
-make clean
-
-# 2. Install fresh dependencies
-npm install
-
-# 3. Build all packages (Turborepo kicks in!)
-npm run build
-
-# 4. Run linting
-npm run lint
-
-# 5. Run tests (when implemented)
-npm run test
-
-# 6. Test production build
-cd apps/web
-npm run preview  # Preview production build locally
-```
-
----
-
-## 🔑 Key Concepts
-
-### Repository Structure
-
-```
-sam3-app/                    # Root of Turborepo workspace
-│
-├── apps/                    # Applications (deployable services)
-│   ├── web/                 # React frontend
-│   └── api-inference/       # FastAPI backend
-│
-├── packages/                # Shared packages (libraries)
-│   ├── shared-types/        # TypeScript types (used by web)
-│   └── tsconfig/            # TypeScript configs
-│
-├── docker/                  # Docker deployment configs
-├── docs/                    # Documentation
-├── tools/                   # CLI tools and scripts
-│
-├── package.json             # Root workspace config
-├── turbo.json              # Turborepo pipeline config
-├── docker-compose.yml      # Docker orchestration
-└── Makefile                # Development commands
-```
-
-### Workspace Dependencies
-
-```
-Dependency Graph:
-
-@sam3/shared-types (TypeScript types)
-        ↓
-@sam3/web (React app)
-        ↓ (uses types from shared-types)
-    Frontend
-
-@sam3/api-inference (FastAPI)
-        ↓ (Python, independent)
-    Backend
-```
-
-**Key Points:**
-- `shared-types` must be built BEFORE `web`
-- Turborepo handles this automatically
-- Backend is independent (Python)
-
-### Turborepo Caching
-
-**First build:**
-```bash
-npm run build
-# Building @sam3/shared-types... 2.3s
-# Building @sam3/web... 5.8s
-# Total: 8.1s
-```
-
-**Second build (no changes):**
-```bash
-npm run build
-# @sam3/shared-types: cache hit ⚡
-# @sam3/web: cache hit ⚡
-# Total: 0.2s (40x faster!)
-```
-
-**What gets cached:**
-- TypeScript compilation results
-- Build outputs (dist/)
-- Lint results
-- Test results
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Issue: "npm run build" fails with TypeScript errors
+### Backend won't start
 
-**Solution:**
+**Error: "Could not authenticate with HuggingFace"**
 ```bash
-# 1. Clean everything
-make clean
-
-# 2. Reinstall dependencies
-npm install
-
-# 3. Build shared types first
-cd packages/shared-types
-npm run build
-
-# 4. Build web
-cd ../apps/web
-npm run build
+# Solution: Add HF_TOKEN to .env file
+cp apps/api-inference/.env.example apps/api-inference/.env
+# Edit .env and add: HF_TOKEN=hf_your_token_here
 ```
 
----
-
-### Issue: Docker fails to start
-
-**Solution:**
+**Error: "Model download failed"**
 ```bash
-# Check Docker is running
-docker --version
+# Solution: Check HuggingFace access
+1. Visit https://huggingface.co/facebook/sam3
+2. Request access (if not approved)
+3. Generate new token at https://huggingface.co/settings/tokens
+```
 
-# View detailed logs
-make docker-logs
+### Frontend won't connect to backend
 
-# Rebuild images
-make docker-build
+**Error: "Network error" in browser console**
+```bash
+# Solution: Check backend is running
+curl http://localhost:8000/api/v1/sam3/health
+
+# If not running, start backend
 make docker-up
+# OR
+make backend-run
 ```
 
----
+### Docker issues
 
-### Issue: Frontend can't import from @sam3/shared-types
-
-**Solution:**
+**Error: "port already allocated"**
 ```bash
-# 1. Build shared types
-cd packages/shared-types
-npm run build
-
-# 2. Verify dist/ was created
-ls -la dist/
-
-# 3. Reinstall workspace dependencies
-cd ../..
-npm install
-
-# 4. Check import in apps/web
-cd apps/web
-npm ls @sam3/shared-types
-# Should show: @sam3/shared-types@0.0.0 -> ../../packages/shared-types
-```
-
----
-
-### Issue: Turborepo cache is stale
-
-**Solution:**
-```bash
-# Clear Turborepo cache
-rm -rf .turbo
-
-# Clear all build artifacts
-make clean
-
-# Rebuild
-npm run build
-```
-
----
-
-### Issue: Port already in use
-
-**Solution:**
-```bash
-# Find process using port 8000
-lsof -i :8000
-
-# Kill process
-kill -9 <PID>
-
-# Or change port in docker-compose.yml
-```
-
----
-
-## 💡 Tips & Best Practices
-
-### 1. Use Docker for Daily Development
-
-```bash
-# Simplest workflow
-make docker-up
-# Code, test, debug
+# Solution: Stop existing containers
 make docker-down
+docker ps -a              # Check for other containers
+docker stop <container>   # Stop conflicting container
 ```
 
-**Why:** Everything configured, GPU works, no dependency issues.
-
----
-
-### 2. Run Turborepo Builds Before Commits
-
+**Error: "Cannot connect to Docker daemon"**
 ```bash
-# Before committing
-npm run build     # Ensure everything builds
-npm run lint      # Check code quality
-git commit -m "..."
+# Solution: Start Docker
+sudo systemctl start docker   # Linux
+# OR open Docker Desktop        # Mac/Windows
 ```
 
-**Why:** Catches TypeScript errors and build failures early.
+### Module not found errors
 
----
-
-### 3. Keep Shared Types Updated
-
-When you change API responses:
-
+**Error: "Module not found" in frontend**
 ```bash
-# 1. Update backend schema (apps/api-inference/src/app/schemas/)
-# 2. Update shared types (packages/shared-types/src/index.ts)
-# 3. Rebuild shared types
-cd packages/shared-types && npm run build
-# 4. Frontend will show TypeScript errors if incompatible!
-```
-
-**Why:** Type safety prevents runtime errors.
-
----
-
-### 4. Use Watch Mode for Shared Types
-
-```bash
-# Terminal 1 - Shared types watch mode
-cd packages/shared-types
-npm run dev
-
-# Terminal 2 - Frontend dev
+# Solution: Reinstall dependencies
 cd apps/web
-npm run dev
-
-# Edit shared types, frontend rebuilds automatically!
+rm -rf node_modules package-lock.json
+npm install
 ```
 
----
-
-### 5. Leverage Makefile for Common Tasks
-
+**Error: "Import error" in backend**
 ```bash
-make docker-up        # Instead of: docker-compose -f docker/...
-make backend-run      # Instead of: cd apps/api-inference && uv run...
-make frontend-dev     # Instead of: cd apps/web && npm run dev
+# Solution: Sync dependencies
+cd apps/api-inference
+uv sync
 ```
 
-**Why:** Shorter commands, easier to remember.
+---
+
+## 🎓 Key Concepts
+
+### Project Structure
+
+```
+sam3-app/
+├── apps/
+│   ├── web/                 # React frontend (independent)
+│   └── api-inference/       # FastAPI backend (independent)
+├── docker-compose.yml       # Orchestrates both services
+├── Makefile                 # Development commands
+└── README.md
+```
+
+### How Services Communicate
+
+- **Frontend → Backend**: HTTP requests to `http://localhost:8000`
+- **Docker Network**: Services use container names for internal communication
+- **Local Dev**: Services use localhost with port numbers
+
+### Environment Variables
+
+**Backend (.env in apps/api-inference/)**
+- `HF_TOKEN` - HuggingFace authentication (required)
+- `SAM3_DEVICE` - CUDA/CPU selection (auto/cuda/cpu)
+- `MAX_IMAGE_SIZE_MB` - Image upload limit
+
+**Frontend (.env in apps/web/)**
+- `VITE_API_URL` - Backend URL (default: http://localhost:8000)
 
 ---
 
-## 📚 Next Steps
+## 💡 Tips
 
-1. **Start Development:** Run `make docker-up` and start coding!
-2. **Read Architecture Docs:** See [docs/architecture/](./architecture/)
-3. **API Documentation:** See [docs/api-specs/](./api-specs/)
-4. **Deployment Guide:** See [docker/README.md](../docker/README.md)
-5. **BYOM Integration:** See [docs/byom-integration-guide/](./byom-integration-guide/)
-
----
-
-## 🤝 Need Help?
-
-- 📖 Read the [main README](../README.md)
-- 🐛 Report issues on [GitHub Issues](https://github.com/agfianf/annotate-anu/issues)
-- 💬 Check [CLAUDE.md](../CLAUDE.md) for AI development guidelines
+1. **Use Docker for most development** - It's the easiest way to run both services
+2. **Check logs often** - `make docker-logs` helps debug issues
+3. **Restart after config changes** - `make docker-restart service=backend`
+4. **Keep dependencies updated** - Run `make install` after pulling changes
+5. **Format before committing** - `make backend-format` for Python code
 
 ---
 
-**Happy Coding! 🚀**
+## 📚 Additional Resources
+
+- [CLAUDE.md](../CLAUDE.md) - Technical architecture details for AI assistants
+- [README.md](../README.md) - Project overview and features
+- [API Documentation](http://localhost:8000/docs) - Interactive API docs (when backend running)

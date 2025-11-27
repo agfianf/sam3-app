@@ -8,38 +8,13 @@ Annotate ANU - A full-stack image annotation application combining SAM3 (Segment
 
 ## Architecture
 
-### Monorepo Structure
-This project uses **Turborepo** for monorepo management with the following structure:
+### Project Structure
+Simple monorepo structure with two independent applications:
 - **Backend**: FastAPI service providing SAM3 inference API (`/apps/api-inference`)
 - **Frontend**: React + TypeScript annotation interface (`/apps/web`)
-- **Shared Packages**:
-  - `packages/tsconfig/` - Shared TypeScript configurations (base, react, node)
-  - `packages/shared-types/` - Shared TypeScript types for API contracts
 - **Docker Compose**: Orchestrates both services with shared networking
-- **Turborepo Config**: `turbo.json` defines pipeline tasks and caching strategy
 
-### Turborepo Workspace Structure
-
-The project uses Turborepo for monorepo management with the following benefits:
-
-**Workspace Packages**:
-- `@sam3/tsconfig` - Shared TypeScript configurations (base.json, react.json, node.json)
-- `@sam3/shared-types` - Shared TypeScript types for API contracts between frontend and backend
-- Future: Additional shared utilities and components
-
-**Key Benefits**:
-- **Build Caching**: Turbo caches build outputs and only rebuilds changed packages
-- **Parallel Execution**: Runs tasks across workspaces in parallel when possible
-- **Dependency Graph**: Automatically determines build order based on workspace dependencies
-- **Consistent Tooling**: Shared configs ensure consistent TypeScript, ESLint, and build settings
-
-**Workspace Commands** (run from root):
-```bash
-npm run dev        # Start all apps in development mode
-npm run build      # Build all apps and packages
-npm run lint       # Lint all workspaces
-turbo run test     # Run tests across all packages
-```
+Each app manages its own dependencies and can be run independently or via Docker.
 
 ### Backend (`/apps/api-inference`)
 **Framework**: FastAPI with Python 3.12
@@ -221,10 +196,9 @@ IndexedDB state inspection:
 
 - **Backend**: Uses `uv` (fast Python package manager) with `pyproject.toml`
 - **Frontend**: Uses `npm` with `package.json`
-- **Turborepo**: Manages workspace dependencies and caching via root `package.json`
 - Always run `make backend-install` from repository root after pulling backend dependency changes
 - Always run `npm install` in `apps/web` directory after pulling frontend dependency changes
-- Run `npm install` from repository root to install all workspace dependencies
+- Use `make install` from repository root to install all dependencies at once
 
 ## Testing
 

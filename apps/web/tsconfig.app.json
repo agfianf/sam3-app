@@ -1,5 +1,5 @@
 {
-  "extends": "@sam3/tsconfig/react.json",
+  "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
     "useDefineForClassFields": true,
@@ -14,8 +14,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src"],
-  "references": [
-    { "path": "../../packages/shared-types" }
-  ]
+  "include": ["src"]
 }

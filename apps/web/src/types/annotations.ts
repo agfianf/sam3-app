@@ -134,16 +134,50 @@ export interface COCODataset {
   categories: COCOCategory[]
 }
 
-// SAM3 types - re-exported from shared package
-export type {
-  SAM3Response,
-  SAM3BatchResponse,
-  InferenceResult,
-  BatchInferenceResult,
-  MaskPolygon,
-  BoundingBox,
-  APIResponse
-} from '@sam3/shared-types'
+// SAM3 API Response Types (inlined from shared-types)
+export interface BoundingBox {
+  x1: number
+  y1: number
+  x2: number
+  y2: number
+}
 
-// Alias for backward compatibility
-export type SAM3Mask = import('@sam3/shared-types').MaskPolygon
+export interface MaskPolygon {
+  polygons: Array<Array<[number, number]>>
+  area: number
+}
+
+export interface InferenceResult {
+  num_objects: number
+  boxes: Array<[number, number, number, number]>
+  scores: number[]
+  masks: MaskPolygon[]
+  processing_time_ms: number
+  visualization_base64?: string
+}
+
+export interface BatchImageResult {
+  image_index: number
+  num_objects: number
+  boxes: Array<[number, number, number, number]>
+  scores: number[]
+  masks: MaskPolygon[]
+  visualization_base64?: string
+}
+
+export interface BatchInferenceResult {
+  total_images: number
+  results: BatchImageResult[]
+  total_processing_time_ms: number
+  average_time_per_image_ms: number
+}
+
+export interface APIResponse<T> {
+  data: T
+  message: string
+  status_code: number
+}
+
+export type SAM3Response = APIResponse<InferenceResult>
+export type SAM3BatchResponse = APIResponse<BatchInferenceResult>
+export type SAM3Mask = MaskPolygon
